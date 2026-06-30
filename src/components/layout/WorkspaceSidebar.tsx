@@ -1,6 +1,9 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { PanelLeftClose, PanelLeft, Home } from 'lucide-react';
 import { WORKSPACES, WORKSPACE_NAV, LAUNCHER_WORKSPACES, PROJECT_TABS, workspaceFromPath, getWorkspace, type WorkspaceDef } from '@/config/workspaces';
+import { getVisibleWorkspaces } from '@/config/roleDashboardRegistry';
+import { filterPathsByRole } from '@/config/rbac';
+import { useAuthStore } from '@/store/auth';
 import { useCloudStats, getWorkspaceStatLines, getWorkspaceProgress } from '@/hooks/useCloudStats';
 import { useUiStore } from '@/store/ui';
 import { useWorkspaceStore } from '@/store/workspace';
@@ -14,15 +17,23 @@ export function WorkspaceSidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
   const { activeWorkspace, setWorkspace } = useWorkspaceStore();
   const { stats } = useCloudStats();
+  const { user } = useAuthStore();
+  const role = user?.role ?? 'user';
+  const visibleWorkspaceIds = getVisibleWorkspaces(role);
 
   useEffect(() => {
     setWorkspace(workspaceFromPath(location.pathname));
   }, [location.pathname, setWorkspace]);
 
   const ws = getWorkspace(activeWorkspace);
-  const navItems = WORKSPACE_NAV[activeWorkspace];
+  const navItems = filterPathsByRole(role, WORKSPACE_NAV[activeWorkspace] ?? []);
   const isCommand = activeWorkspace === 'command';
   const isProjectDetail = /^\/projects\/[^/]+/.test(location.pathname);
+  const isAdminRole = role === 'admin' || role === 'org_admin';
+  const launcherWorkspaces = LAUNCHER_WORKSPACES.filter((app) => {
+    if (!visibleWorkspaceIds) return app.id === 'command';
+    return visibleWorkspaceIds.includes(app.id);
+  });
 
   const launchApp = (app: WorkspaceDef) => {
     setWorkspace(app.id);
@@ -57,7 +68,7 @@ export function WorkspaceSidebar() {
             </NavLink>
 
             <SectionLabel collapsed={sidebarCollapsed} className="mt-5">Workspaces</SectionLabel>
-            {LAUNCHER_WORKSPACES.map((app) => (
+            {launcherWorkspaces.map((app) => (
               <AppLauncherCard
                 key={app.id}
                 ws={app}
@@ -69,15 +80,19 @@ export function WorkspaceSidebar() {
               />
             ))}
 
-            <SectionLabel collapsed={sidebarCollapsed} className="mt-5">Platform</SectionLabel>
-            <AppLauncherCard
-              ws={WORKSPACES.find((w) => w.id === 'admin')!}
-              lines={['Users', 'Settings']}
-              progress={100}
-              collapsed={sidebarCollapsed}
-              onLaunch={() => launchApp(WORKSPACES.find((w) => w.id === 'admin')!)}
-              active={location.pathname.startsWith('/admin')}
-            />
+            {isAdminRole && (
+              <>
+                <SectionLabel collapsed={sidebarCollapsed} className="mt-5">Platform</SectionLabel>
+                <AppLauncherCard
+                  ws={WORKSPACES.find((w) => w.id === 'admin')!}
+                  lines={role === 'admin' ? ['Users', 'Settings', 'Enterprise'] : ['Users', 'Roles', 'Settings']}
+                  progress={100}
+                  collapsed={sidebarCollapsed}
+                  onLaunch={() => launchApp(WORKSPACES.find((w) => w.id === 'admin')!)}
+                  active={location.pathname.startsWith('/admin')}
+                />
+              </>
+            )}
           </>
         ) : isProjectDetail ? (
           <ProjectContextNav collapsed={sidebarCollapsed} projectPath={location.pathname.split('?')[0]} />

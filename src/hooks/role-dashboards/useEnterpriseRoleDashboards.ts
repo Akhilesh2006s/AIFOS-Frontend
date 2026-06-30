@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { RoleDashboardPayload } from './dashboardLoaders';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import {
   loadContractorSupervisorDashboard,
   loadCooDashboard,
@@ -16,34 +17,38 @@ import {
   loadSupervisorDashboard,
 } from './dashboardLoaders';
 
+const emptyPayload: RoleDashboardPayload = {
+  kpis: [],
+  todaysWork: [],
+  alerts: [],
+  quickActions: [],
+  recentActivity: [],
+  chartOptions: [],
+};
+
 function useDashboardLoader(loader: () => Promise<RoleDashboardPayload>) {
   const [data, setData] = useState<RoleDashboardPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       setData(await loader());
     } catch (e) {
-      console.error(e);
-      setData({
-        kpis: [],
-        todaysWork: [],
-        alerts: [],
-        quickActions: [],
-        recentActivity: [],
-        chartOptions: [],
-      });
+      setData(emptyPayload);
+      setError(getApiErrorMessage(e, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
-  }, [loader]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  return { data, loading, refresh: load };
+  return { data, loading, error, refresh: load };
 }
 
 export const useExecutiveDashboard = () => useDashboardLoader(loadExecutiveDashboard);

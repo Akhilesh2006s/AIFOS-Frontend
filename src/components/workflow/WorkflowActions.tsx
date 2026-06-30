@@ -170,7 +170,7 @@ function buildActions(
   const pendingPrs = prs.filter((p) => p.status?.includes('pending') || p.status === 'pending_l1' || p.status === 'pending_l2');
   const approvedPrs = prs.filter((p) => p.status === 'approved');
   const rfqOpenPrs = prs.filter((p) => p.status === 'rfq_open');
-  const openPos = pos.filter((p) => !['received', 'closed'].includes(p.status));
+  const grnEligiblePos = pos.filter((p) => ['approved', 'issued', 'partial_received'].includes(p.status));
   const sites = flow.sites ?? [];
 
   if (boq.length > 0 && mrs.length === 0) {
@@ -236,11 +236,16 @@ function buildActions(
       run: async () => {
         const rfqs = await moduleApi.procurement.rfqs();
         const projectRfqs = rfqs.data.filter((r: { projectId?: string; status?: string }) =>
-          r.projectId === projectId && ['sent', 'quotes_received'].includes(r.status || ''),
+          r.projectId === projectId && ['sent', 'quotes_received', 'published', 'open'].includes(r.status || ''),
         );
         if (!projectRfqs.length) throw new Error('No open RFQ found');
 
-        const rfq = projectRfqs[0];
+        let rfq = projectRfqs[0];
+        if (rfq.status === 'draft') {
+          await moduleApi.procurement.publishRfq(rfq._id);
+          const refreshed = await moduleApi.procurement.rfqs();
+          rfq = refreshed.data.find((r: { _id: string }) => r._id === rfq._id) || rfq;
+        }
         const pr = prs.find((p) => p._id) || pendingPrs[0] || approvedPrs[0];
         const vendors = await moduleApi.procurement.vendors();
         const lines = (pr?.items || []).map((i) => ({
@@ -264,8 +269,11 @@ function buildActions(
     });
   }
 
-  for (const po of openPos) {
-    if (grns.length === 0 || !grns.some((g) => (g as { poId?: string }).poId === po._id)) {
+  for (const po of grnEligiblePos) {
+    if (grns.length === 0 || !grns.some((g) => {
+      const grn = g as { poId?: string; purchaseOrderId?: string };
+      return grn.poId === po._id || grn.purchaseOrderId === po._id;
+    })) {
       actions.push({
         id: `grn-${po._id}`,
         label: `Receive GRN for ${po.poNumber || 'PO'}`,

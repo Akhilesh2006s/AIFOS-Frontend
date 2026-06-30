@@ -5,6 +5,14 @@ import { getDefaultLandingPath } from '@/config/roleLanding';
 /** `/` — role-aware entry; platform knows where you belong */
 export function RoleHomeRedirect() {
   const { user } = useAuthStore();
-  const role = user?.role || JSON.parse(localStorage.getItem('afios_user') || '{}')?.role;
+  let role = user?.role;
+  if (!role) {
+    try {
+      const raw = sessionStorage.getItem('afios_user') || localStorage.getItem('afios_user') || '{}';
+      role = JSON.parse(raw)?.role;
+    } catch {
+      role = undefined;
+    }
+  }
   return <Navigate to={getDefaultLandingPath(role)} replace />;
 }

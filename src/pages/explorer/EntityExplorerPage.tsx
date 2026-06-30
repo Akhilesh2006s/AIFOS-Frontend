@@ -12,6 +12,7 @@ import { ExplorerRelationshipPanel } from '@/components/explorer/ExplorerRelatio
 import { ExplorerWorkflowPanel } from '@/components/explorer/ExplorerWorkflowPanel';
 import { ExplorerBreadcrumbTrail } from '@/components/explorer/ExplorerBreadcrumbTrail';
 import { explorerApi } from '@/api/client';
+import { explorerPath } from '@/lib/explorerLinks';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { ExplorerView } from '@/types/explorer';
 
@@ -212,13 +213,13 @@ export function EntityExplorerPage() {
                 <p className="p-6 text-sm text-slate-500">No documents linked.</p>
               ) : (
                 data.documents.map((d) => (
-                  <div key={d.id} className="flex items-center gap-3 px-4 py-3">
+                  <Link key={d.id} to={explorerPath('document', d.id)} className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03]">
                     <FileText size={16} className="text-sky-400" />
                     <div>
                       <p className="text-sm text-white">{d.title}</p>
                       <p className="text-xs text-slate-500">{d.category}</p>
                     </div>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>

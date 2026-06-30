@@ -7,10 +7,12 @@ interface RoleDashboardViewProps {
   roleKey: keyof typeof ROLE_DASHBOARD_META;
   data: RoleDashboardPayload | null;
   loading: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 /** Renders a role dashboard from registry metadata + loaded data */
-export function RoleDashboardView({ roleKey, data, loading }: RoleDashboardViewProps) {
+export function RoleDashboardView({ roleKey, data, loading, error, onRetry }: RoleDashboardViewProps) {
   const meta = ROLE_DASHBOARD_META[roleKey];
 
   return (
@@ -25,6 +27,8 @@ export function RoleDashboardView({ roleKey, data, loading }: RoleDashboardViewP
       largeActions={meta.largeActions}
       headerLink={meta.headerLink}
       loading={loading}
+      error={error}
+      onRetry={onRetry}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       decisions={data?.decisions}

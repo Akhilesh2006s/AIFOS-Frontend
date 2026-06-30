@@ -91,9 +91,9 @@ export default function App() {
         <Route path="/supply-chain" element={<Lazy><SupplyChainWorkspacePage /></Lazy>} />
         <Route path="/business" element={<Lazy><BusinessWorkspacePage /></Lazy>} />
         <Route path="/business/vendor-bills" element={<Lazy><VendorBillsPage /></Lazy>} />
-        <Route path="/business/vendor-bills/:billId" element={<ExplorerRedirect kind="vendor-bill" />} />
+        <Route path="/business/vendor-bills/:billId" element={<Lazy><VendorBillsPage /></Lazy>} />
         <Route path="/business/payments" element={<Lazy><PaymentsPage /></Lazy>} />
-        <Route path="/business/payments/:paymentId" element={<ExplorerRedirect kind="payment" />} />
+        <Route path="/business/payments/:paymentId" element={<Lazy><PaymentsPage /></Lazy>} />
         <Route path="/business/documents" element={<Lazy><DocumentCenterPage /></Lazy>} />
         <Route path="/business/documents/:docId" element={<ExplorerRedirect kind="document" />} />
         <Route path="/business/compliance" element={<Lazy><CompliancePlusPage /></Lazy>} />

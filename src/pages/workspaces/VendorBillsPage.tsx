@@ -4,6 +4,8 @@ import {
   AlertTriangle, ArrowLeft, CheckCircle2, FileText, Plus, RefreshCw, Send, XCircle,
 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabLinks } from '@/components/layout/ModuleTabLinks';
+import { TableCard, TableEmpty } from '@/components/ui/TableCard';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { moduleApi } from '@/api/client';
 import { unwrapList } from '@/lib/apiHelpers';
@@ -99,53 +101,53 @@ function VendorBillsList() {
         </div>
       }
     >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <Link
-            key={t.id}
-            to={`/business/vendor-bills?tab=${t.id}`}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize ${tab === t.id ? 'bg-sky-500/20 text-sky-300' : 'text-slate-500 hover:text-white'}`}
-          >
-            {t.id}
-          </Link>
-        ))}
-      </div>
+      <ModuleTabLinks
+        active={tab}
+        tabs={TABS.map((t) => ({
+          id: t.id,
+          label: t.id,
+          href: `/business/vendor-bills?tab=${t.id}`,
+        }))}
+      />
 
       {showCreate && <CreateBillForm onClose={() => setShowCreate(false)} onCreated={load} />}
 
-      <div className="command-card overflow-x-auto p-0">
-        <table className="w-full text-left text-sm">
+      <TableCard>
+        <table className="data-table">
           <thead>
-            <tr className="border-b border-white/5 text-[10px] uppercase tracking-wider text-slate-500">
-              <th className="px-5 py-3">Bill #</th>
-              <th className="px-5 py-3">Invoice</th>
-              <th className="px-5 py-3">Vendor</th>
-              <th className="px-5 py-3">Amount</th>
-              <th className="px-5 py-3">Status</th>
-              <th className="px-5 py-3" />
+            <tr>
+              <th scope="col">Bill #</th>
+              <th scope="col">Invoice</th>
+              <th scope="col">Vendor</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Status</th>
+              <th scope="col" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No vendor bills</td></tr>
+              <TableEmpty colSpan={6} message="No vendor bills" />
             ) : filtered.map((b) => (
-              <tr key={b.id}>
-                <td className="px-5 py-3 font-mono text-xs">{b.billNumber}</td>
-                <td className="px-5 py-3">{b.invoiceNumber}</td>
-                <td className="px-5 py-3 text-slate-400">{b.vendorId.slice(-8)}</td>
-                <td className="px-5 py-3 font-mono text-xs">{formatCurrency(b.totalAmount)}</td>
-                <td className={`px-5 py-3 text-xs capitalize ${STATUS_COLORS[b.status] || ''}`}>
+              <tr key={b.id} className="data-table-row">
+                <td className="font-mono text-xs">{b.billNumber}</td>
+                <td>{b.invoiceNumber}</td>
+                <td>{b.vendorId.slice(-8)}</td>
+                <td className="font-mono text-xs tabular-nums">{formatCurrency(b.totalAmount)}</td>
+                <td className={`text-xs capitalize ${STATUS_COLORS[b.status] || ''}`}>
                   {b.status.replace(/_/g, ' ')}
                   {b.exceptionCount > 0 && <span className="ml-1 text-red-400">({b.exceptionCount})</span>}
                 </td>
-                <td className="px-5 py-3">
-                  <Link to={explorerPath('vendor-bill', b.id)} className="text-accent hover:underline text-xs">Explore</Link>
+                <td>
+                  <div className="flex gap-3">
+                    <Link to={`/business/vendor-bills/${b.id}`} className="text-xs text-accent hover:underline">Manage</Link>
+                    <Link to={explorerPath('vendor-bill', b.id)} className="text-xs text-slate-500 hover:text-slate-300">Explore</Link>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </TableCard>
     </ModulePageLayout>
   );
 }
@@ -202,7 +204,7 @@ function CreateBillForm({ onClose, onCreated }: { onClose: () => void; onCreated
           <select
             value={form.purchaseOrderId}
             onChange={(e) => setForm({ ...form, purchaseOrderId: e.target.value, totalAmount: String(pos.find((p) => p._id === e.target.value)?.totalAmount ?? '') })}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white"
+            className="select-field mt-1 w-full text-sm"
           >
             <option value="">Select PO…</option>
             {pos.map((p) => <option key={p._id} value={p._id}>{p.poNumber} — {formatCurrency(p.totalAmount)}</option>)}
@@ -211,17 +213,17 @@ function CreateBillForm({ onClose, onCreated }: { onClose: () => void; onCreated
         <label className="text-xs text-slate-500">
           Invoice Number
           <input value={form.invoiceNumber} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+            className="input-field mt-1 w-full text-sm" />
         </label>
         <label className="text-xs text-slate-500">
           Invoice Date
           <input type="date" value={form.invoiceDate} onChange={(e) => setForm({ ...form, invoiceDate: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+            className="input-field mt-1 w-full text-sm" />
         </label>
         <label className="text-xs text-slate-500">
           Total Amount
           <input type="number" value={form.totalAmount} onChange={(e) => setForm({ ...form, totalAmount: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+            className="input-field mt-1 w-full text-sm" />
         </label>
       </div>
       <div className="mt-4 flex gap-2">

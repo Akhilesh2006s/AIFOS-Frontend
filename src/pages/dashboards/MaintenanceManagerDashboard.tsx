@@ -5,7 +5,7 @@ import { useMaintenanceDashboard } from '@/hooks/role-dashboards/useMaintenanceD
 const meta = ROLE_DASHBOARD_META.maintenance_manager;
 
 export function MaintenanceManagerDashboard() {
-  const { data, loading } = useMaintenanceDashboard();
+  const { data, loading, error, refresh } = useMaintenanceDashboard();
 
   return (
     <RoleDashboardShell
@@ -17,6 +17,8 @@ export function MaintenanceManagerDashboard() {
       workSectionTitle={meta.workSectionTitle}
       showRecentActivity={meta.showRecentActivity}
       loading={loading}
+      error={error}
+      onRetry={refresh}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       alerts={data?.alerts ?? []}

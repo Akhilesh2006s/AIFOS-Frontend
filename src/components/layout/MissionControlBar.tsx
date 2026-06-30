@@ -20,7 +20,7 @@ export function MissionControlBar() {
 
   const navWorkspaces = WORKSPACES.filter((w) => {
     if (w.id === 'admin') return isAdminRole;
-    if (!visibleIds) return true;
+    if (!visibleIds) return w.id === 'command';
     return visibleIds.includes(w.id);
   });
 

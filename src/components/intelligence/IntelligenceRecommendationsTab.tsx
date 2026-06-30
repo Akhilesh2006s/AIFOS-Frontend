@@ -4,6 +4,7 @@ import {
   AlertTriangle, BarChart3, Brain, History, LayoutDashboard, List,
   Loader2, Play, RefreshCw, Star,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { intelligenceApi } from '@/api/client';
 import { cn, formatDate } from '@/lib/utils';
 
@@ -64,25 +65,16 @@ export function IntelligenceRecommendationsTab({ projectId, sub, onSubChange }: 
   };
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'list' as const, label: 'All Recommendations', icon: List },
-        { id: 'history' as const, label: 'History', icon: History },
-        { id: 'scoring' as const, label: 'Scoring', icon: BarChart3 },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-violet-500/20 text-violet-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={12} /> {s.label}
-        </button>
-      ))}
-    </div>
+    <FilterChipBar
+      items={[
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'list', label: 'All Recommendations', icon: List },
+        { id: 'history', label: 'History', icon: History },
+        { id: 'scoring', label: 'Scoring', icon: BarChart3 },
+      ]}
+      active={sub}
+      onChange={(id) => onSubChange(id as RecSub)}
+    />
   );
 
   if (loading && !items.length) {

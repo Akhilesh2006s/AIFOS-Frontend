@@ -6,7 +6,9 @@ import { downloadExport } from '@/hooks/useInsights';
 import { InsightsFilters } from '@/components/insights/InsightsFilters';
 import { BarChart, ComparisonRow, DataTable, KpiStrip, TrendChart, formatCurrency } from '@/components/insights/chartHelpers';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { cn } from '@/lib/utils';
+import { PageSkeleton } from '@/components/ui/PageSkeleton';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
+import { getWorkspace } from '@/config/workspaces';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -71,7 +73,7 @@ export function InsightsPage() {
   const [communicationAnalytics, setCommunicationAnalytics] = useState<Record<string, unknown> | null>(null);
   const [organizationAnalytics, setOrganizationAnalytics] = useState<Record<string, unknown> | null>(null);
   const [globalAnalytics, setGlobalAnalytics] = useState<Record<string, unknown> | null>(null);
-  const [savedReports, setSavedReports] = useState<Array<{ _id: string; name: string; section: string }>>([]);
+  const [savedReports, setSavedReports] = useState<Array<{ _id: string; name: string; section: string; filters?: Record<string, string> }>>([]);
   const [searchQ, setSearchQ] = useState('');
   const [searchResults, setSearchResults] = useState<{ reports: Array<{ id: string; name: string; path: string }>; sections: Array<{ id: string; label: string; path: string }> } | null>(null);
   const [reportName, setReportName] = useState('');
@@ -268,7 +270,7 @@ export function InsightsPage() {
   } | null;
 
   const tabContent = useMemo(() => {
-    if (loading && !overview) {
+    if (loading) {
       return (
         <div className="flex justify-center py-20">
           <Loader2 className="animate-spin text-accent" size={32} />
@@ -902,7 +904,7 @@ export function InsightsPage() {
             <p className="text-xs text-slate-500">Moving average + linear trend from operational history — no AI, no ML.</p>
             <KpiStrip items={[
               { label: 'Overall Accuracy', value: `${pa?.kpis?.overallAccuracy ?? pa?.accuracy?.overall ?? 0}%`, link: '/intelligence?tab=predictions&sub=accuracy' },
-              { label: 'Forecast Types', value: pa?.kpis?.types ?? 8, link: '/intelligence?tab=predictions' },
+              { label: 'Forecast Types', value: pa?.kpis?.types ?? pa?.series?.length ?? 0, link: '/intelligence?tab=predictions' },
               { label: 'Projects', value: pa?.kpis?.projectsWithForecasts ?? 0, link: '/intelligence?tab=predictions&sub=projects' },
             ]} />
             <div className="grid gap-4 lg:grid-cols-2">
@@ -986,7 +988,15 @@ export function InsightsPage() {
                       <p className="text-[10px] text-slate-500">{r.section}</p>
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => setTab(r.section as TabId)} className="text-xs text-accent">Open</button>
+                      <button
+                        onClick={() => {
+                          if (r.filters) setFilters(r.filters);
+                          setTab(r.section as TabId);
+                        }}
+                        className="text-xs text-accent"
+                      >
+                        Open
+                      </button>
                       <button onClick={() => insightsApi.reports.delete(r._id).then(load)} className="text-slate-500 hover:text-red-400"><Trash2 size={14} /></button>
                     </div>
                   </div>
@@ -999,7 +1009,7 @@ export function InsightsPage() {
       case 'exports':
         return (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {['overview', 'projects', 'supply-chain', 'assets', 'finance', 'compliance', 'workforce', 'brief'].map((section) => (
+            {['overview', 'projects', 'supply-chain', 'assets', 'finance', 'compliance', 'workforce', 'safety', 'quality', 'brief'].map((section) => (
               <div key={section} className="command-card p-4">
                 <div className="flex items-center gap-2">
                   <FileText size={18} className="text-violet-400" />
@@ -1409,15 +1419,24 @@ export function InsightsPage() {
     }
   }, [tab, loading, overview, projects, supplyChain, assets, finance, compliance, workforce, safety, permits, quality, operational, recommendations, predictionAnalytics, risks, rulesAnalytics, platform, forecasts, brief, integrationAnalytics, savedReports, o]);
 
+  const insightsWs = getWorkspace('insights');
+
+  if (loading && !overview && tab === 'overview') {
+    return <PageSkeleton />;
+  }
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-12">
+    <div className="page-enter mx-auto max-w-[1600px] space-y-6 pb-12">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-violet-400">Insights Workspace</p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-white">Analytics & Reporting</h1>
-          <p className="mt-1 text-sm text-slate-500">Why it happened — trends, comparisons, and exportable reports from live data</p>
+        <div className="min-w-0">
+          <p className="text-overline mb-2">
+            <span style={{ color: insightsWs.color }}>{insightsWs.label}</span>
+            <span className="text-slate-600"> · Workspace</span>
+          </p>
+          <h1 className="text-heading-page">Analytics & Reporting</h1>
+          <p className="mt-2 max-w-2xl text-body">Why it happened — trends, comparisons, and exportable reports from live data</p>
         </div>
-        <button onClick={load} className="flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-400 hover:text-white">
+        <button type="button" onClick={load} className="btn-ghost btn-sm flex shrink-0 items-center gap-2">
           {loading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
           Refresh
         </button>
@@ -1445,20 +1464,11 @@ export function InsightsPage() {
 
       <InsightsFilters filters={filters} onChange={setFilters} />
 
-      <div className="flex flex-wrap gap-1 border-b border-white/10 pb-1">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={cn(
-              'rounded-t-lg px-3 py-2 text-xs font-medium transition-colors',
-              tab === t.id ? 'bg-violet-500/15 text-violet-300' : 'text-slate-500 hover:text-slate-300',
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <ModuleTabs
+        tabs={TABS}
+        active={tab}
+        onChange={(id) => setTab(id as TabId)}
+      />
 
       {error && <ErrorState message={error} onRetry={load} />}
 

@@ -4,10 +4,13 @@ import {
   ArrowLeft, Banknote, Calendar, CheckCircle2, Clock, Plus, AlertTriangle,
 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabLinks } from '@/components/layout/ModuleTabLinks';
+import { TableCard, TableEmpty } from '@/components/ui/TableCard';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { moduleApi } from '@/api/client';
 import { unwrapList } from '@/lib/apiHelpers';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, cn } from '@/lib/utils';
+import { explorerPath } from '@/lib/explorerLinks';
 
 type PaymentRow = {
   id: string;
@@ -91,51 +94,48 @@ function PaymentsList() {
         </div>
       }
     >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <Link
-            key={t}
-            to={`/business/payments?tab=${t}`}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize ${tab === t ? 'bg-violet-500/20 text-violet-300' : 'text-slate-500 hover:text-white'}`}
-          >
-            {t === 'ready' ? `Ready (${ready.length})` : t}
-          </Link>
-        ))}
-      </div>
+      <ModuleTabLinks
+        active={tab}
+        tabs={TABS.map((t) => ({
+          id: t,
+          label: t === 'ready' ? `Ready (${ready.length})` : t,
+          href: `/business/payments?tab=${t}`,
+        }))}
+      />
 
       {showSchedule && (
         <ScheduleForm readyBills={ready} onClose={() => setShowSchedule(false)} onDone={load} />
       )}
 
       {tab === 'ready' ? (
-        <div className="command-card p-0 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+        <TableCard>
+          <table className="data-table">
             <thead>
-              <tr className="border-b border-white/5 text-[10px] uppercase text-slate-500">
-                <th className="px-5 py-3">Invoice</th>
-                <th className="px-5 py-3">Vendor</th>
-                <th className="px-5 py-3">Amount</th>
-                <th className="px-5 py-3">Due</th>
-                <th className="px-5 py-3" />
+              <tr>
+                <th scope="col">Invoice</th>
+                <th scope="col">Vendor</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Due</th>
+                <th scope="col" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody>
               {ready.length === 0 ? (
-                <tr><td colSpan={5} className="px-5 py-8 text-center text-slate-500">No bills ready for payment</td></tr>
+                <TableEmpty colSpan={5} message="No bills ready for payment" />
               ) : ready.map((b) => (
-                <tr key={String(b.billId)}>
-                  <td className="px-5 py-3">{String(b.invoiceNumber)}</td>
-                  <td className="px-5 py-3 text-slate-400">{String(b.vendorId).slice(-8)}</td>
-                  <td className="px-5 py-3 font-mono text-xs">{formatCurrency(Number(b.amount))}</td>
-                  <td className="px-5 py-3 text-xs">{b.dueDate ? formatDate(String(b.dueDate)) : '—'}</td>
-                  <td className="px-5 py-3">
+                <tr key={String(b.billId)} className="data-table-row">
+                  <td>{String(b.invoiceNumber)}</td>
+                  <td>{String(b.vendorId).slice(-8)}</td>
+                  <td className="font-mono text-xs tabular-nums">{formatCurrency(Number(b.amount))}</td>
+                  <td className="text-xs">{b.dueDate ? formatDate(String(b.dueDate)) : '—'}</td>
+                  <td>
                     <Link to={String(b.link)} className="text-accent text-xs hover:underline">View Bill</Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </TableCard>
       ) : (
         <PaymentsTable rows={filtered} />
       )}
@@ -152,36 +152,39 @@ function PaymentsList() {
 
 function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
   return (
-    <div className="command-card overflow-x-auto p-0">
-      <table className="w-full text-left text-sm">
+    <TableCard>
+      <table className="data-table">
         <thead>
-          <tr className="border-b border-white/5 text-[10px] uppercase text-slate-500">
-            <th className="px-5 py-3">Payment #</th>
-            <th className="px-5 py-3">Vendor</th>
-            <th className="px-5 py-3">Amount</th>
-            <th className="px-5 py-3">Due</th>
-            <th className="px-5 py-3">Status</th>
-            <th className="px-5 py-3" />
+          <tr>
+            <th scope="col">Payment #</th>
+            <th scope="col">Vendor</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Due</th>
+            <th scope="col">Status</th>
+            <th scope="col" />
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
+        <tbody>
           {rows.length === 0 ? (
-            <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-500">No payments</td></tr>
+            <TableEmpty colSpan={6} message="No payments" />
           ) : rows.map((p) => (
-            <tr key={p.id} className={p.overdue ? 'bg-red-500/5' : ''}>
-              <td className="px-5 py-3 font-mono text-xs">{p.paymentNumber}</td>
-              <td className="px-5 py-3 text-slate-400">{p.vendorId.slice(-8)}</td>
-              <td className="px-5 py-3 font-mono text-xs">{formatCurrency(p.amount)}</td>
-              <td className="px-5 py-3 text-xs">{formatDate(p.dueDate)}</td>
-              <td className="px-5 py-3 text-xs capitalize">{p.status.replace(/_/g, ' ')}</td>
-              <td className="px-5 py-3">
-                <Link to={p.link} className="text-accent text-xs hover:underline">View</Link>
+            <tr key={p.id} className={cn('data-table-row', p.overdue && 'bg-red-500/5')}>
+              <td className="font-mono text-xs">{p.paymentNumber}</td>
+              <td>{p.vendorId.slice(-8)}</td>
+              <td className="font-mono text-xs tabular-nums">{formatCurrency(p.amount)}</td>
+              <td className="text-xs">{formatDate(p.dueDate)}</td>
+              <td className="text-xs capitalize">{p.status.replace(/_/g, ' ')}</td>
+              <td>
+                <div className="flex gap-3">
+                  <Link to={`/business/payments/${p.id}`} className="text-accent text-xs hover:underline">Manage</Link>
+                  <Link to={explorerPath('payment', p.id)} className="text-xs text-slate-500 hover:text-slate-300">Explore</Link>
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+    </TableCard>
   );
 }
 
@@ -219,7 +222,7 @@ function ScheduleForm({
       <h3 className="text-sm font-semibold text-white">Schedule Payment from Vendor Bill</h3>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <select value={billId} onChange={(e) => setBillId(e.target.value)}
-          className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white">
+          className="select-field text-sm">
           <option value="">Select bill ready for payment…</option>
           {readyBills.map((b) => (
             <option key={String(b.billId)} value={String(b.billId)}>
@@ -228,7 +231,7 @@ function ScheduleForm({
           ))}
         </select>
         <input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)}
-          className="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white" />
+          className="input-field text-sm" />
       </div>
       <div className="mt-3 flex gap-2">
         <button type="button" disabled={saving} onClick={submit} className="btn-primary text-sm">Schedule</button>

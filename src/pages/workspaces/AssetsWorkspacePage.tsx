@@ -5,6 +5,8 @@ import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
 import { ModuleTabs } from '@/components/layout/ModuleTabs';
 import { AssetsSearch } from '@/components/assets/AssetsSearch';
 import { useContextStore } from '@/store/context';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { moduleApi } from '@/api/client';
 import { formatCurrency, cn } from '@/lib/utils';
 
@@ -34,20 +36,27 @@ export function AssetsWorkspacePage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [reports, setReports] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const pid = activeProject?.id;
-      const dash = await moduleApi.assets.dashboard(pid);
-      setDashboard(dash.data);
-      if (tab === 'reports') {
-        const rep = await moduleApi.assets.reports(pid);
-        setReports(rep.data);
+      setError(null);
+      try {
+        const pid = activeProject?.id;
+        const dash = await moduleApi.assets.dashboard(pid);
+        setDashboard(dash.data);
+        if (tab === 'reports') {
+          const rep = await moduleApi.assets.reports(pid);
+          setReports(rep.data);
+        }
+      } catch (e) {
+        setError(getApiErrorMessage(e, 'Failed to load assets workspace'));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    load().catch(() => setLoading(false));
+    load();
   }, [activeProject?.id, tab]);
 
   const k = dashboard?.kpis;
@@ -76,6 +85,7 @@ export function AssetsWorkspacePage() {
     >
       {tab === 'overview' && (
         <>
+          {error && !dashboard && <ErrorState message={error} />}
           <AssetsSearch />
           {segments.length > 0 && (
             <div className="command-card p-6">

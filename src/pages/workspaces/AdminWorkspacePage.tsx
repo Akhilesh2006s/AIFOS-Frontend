@@ -4,6 +4,7 @@ import {
   Building2, Key, Lock, Mail, Plus, RefreshCw, Settings, Shield, Unlock, UserPlus, Users,
 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
 import { Modal } from '@/components/ui/Modal';
 import { TextField, SelectField, FormActions } from '@/components/ui/FormField';
 import { moduleApi } from '@/api/client';
@@ -121,21 +122,16 @@ export function AdminWorkspacePage() {
         </div>
       }
     >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={cn(
-              'rounded-lg px-3 py-1.5 text-xs capitalize',
-              tab === t ? 'bg-accent/20 text-accent' : 'bg-white/5 text-slate-400 hover:text-white',
-            )}
-          >
-            {t}
-          </button>
-        ))}
-        <button type="button" onClick={() => load()} className="btn-ghost ml-auto p-1.5"><RefreshCw size={14} /></button>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <ModuleTabs
+          className="min-w-0 flex-1"
+          tabs={TABS.map((t) => ({ id: t, label: t }))}
+          active={tab}
+          onChange={(id) => setTab(id as (typeof TABS)[number])}
+        />
+        <button type="button" onClick={() => load()} className="btn-ghost btn-sm shrink-0" aria-label="Refresh">
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       {tab === 'dashboard' && dashboard && (

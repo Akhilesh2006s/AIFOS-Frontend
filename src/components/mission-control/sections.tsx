@@ -479,7 +479,7 @@ function BudgetBadge({ status }: { status: string }) {
 
 export function AssetHealthSection({ health }: { health: Record<string, number> }) {
   const items = [
-    { label: 'Running', value: health.running, link: '/explore/equipment', icon: TrendingUp, color: 'text-emerald-400' },
+    { label: 'Running', value: health.running, link: '/equipment', icon: TrendingUp, color: 'text-emerald-400' },
     { label: 'Idle', value: health.idle, link: '/equipment?status=idle', icon: Clock, color: 'text-slate-400' },
     { label: 'Breakdown', value: health.breakdown, link: '/maintenance?tab=breakdowns', icon: Wrench, color: 'text-red-400' },
     { label: 'Maint. Due', value: health.maintenanceDue, link: '/maintenance', icon: Wrench, color: 'text-amber-400' },
@@ -507,7 +507,7 @@ export function AssetHealthSection({ health }: { health: Record<string, number> 
 
 export function SupplyChainHealthSection({ health }: { health: Record<string, number> }) {
   const items = [
-    { label: 'Open PR', value: health.openPR, link: '/explore/purchase-request/by-number/PR-1024' },
+    { label: 'Open PR', value: health.openPR, link: '/procurement?tab=pr' },
     { label: 'Open RFQ', value: health.openRFQ, link: '/procurement?tab=rfq' },
     { label: 'Pending PO', value: health.pendingPO, link: '/procurement?tab=po' },
     { label: "Today's GRN", value: health.todayGrn, link: '/inventory?tab=grn' },

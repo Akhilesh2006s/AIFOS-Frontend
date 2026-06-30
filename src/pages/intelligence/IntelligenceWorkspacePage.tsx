@@ -4,6 +4,7 @@ import {
   AlertTriangle, Brain, Play, RefreshCw, Shield, TrendingUp, Zap,
 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { intelligenceApi } from '@/api/client';
 import { IntelligenceRulesTab, type RuleSub } from '@/components/intelligence/IntelligenceRulesTab';
@@ -95,20 +96,11 @@ export function IntelligenceWorkspacePage() {
   useEffect(() => { load(); }, [load]);
 
   const tabs = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-1">
-      {TABS.map((t) => (
-        <button
-          key={t}
-          onClick={() => setTab(t)}
-          className={cn(
-            'rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition',
-            tab === t ? 'bg-violet-500/20 text-violet-300' : 'text-slate-500 hover:text-white hover:bg-white/5',
-          )}
-        >
-          {t}
-        </button>
-      ))}
-    </div>
+    <ModuleTabs
+      tabs={TABS.map((t) => ({ id: t, label: t }))}
+      active={tab}
+      onChange={(id) => setTab(id as TabId)}
+    />
   );
 
   if (error) return <ErrorState message={error} onRetry={load} />;
@@ -205,7 +197,7 @@ export function IntelligenceWorkspacePage() {
       loading={loading && tab !== 'rules' && tab !== 'recommendations' && tab !== 'predictions' && tab !== 'risks' && tab !== 'briefs'}
       tabs={tabs}
       heroActions={
-        <button onClick={load} className="flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:text-white">
+        <button type="button" onClick={load} className="btn-ghost btn-sm flex items-center gap-1">
           <RefreshCw size={14} /> Refresh
         </button>
       }

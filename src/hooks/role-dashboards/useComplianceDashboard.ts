@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { moduleApi } from '@/api/client';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
+import { explorerPath } from '@/lib/explorerLinks';
 import { formatDate } from '@/lib/utils';
 import type {
   DashboardActivity,
@@ -37,9 +39,11 @@ function categorizeDoc(documentType?: string): string {
 export function useComplianceDashboard() {
   const [data, setData] = useState<ComplianceDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [statsRes, recordsRes, alertsRes] = await Promise.all([
         moduleApi.compliance.stats(),
@@ -79,7 +83,7 @@ export function useComplianceDashboard() {
           label: `Renew ${r.documentType}`,
           detail: r.documentNumber,
           status: r.alertTier,
-          href: '/compliance',
+          href: explorerPath('compliance-record', r._id),
         }),
       );
 
@@ -89,15 +93,15 @@ export function useComplianceDashboard() {
           severity: a.alertTier === 'expired' ? 'critical' : a.alertTier === '7_days' ? 'critical' : 'warning',
           title: `${a.record.documentType} — ${a.record.documentNumber}`,
           message: `Expires: ${a.alertTier.replace('_', ' ')}`,
-          href: '/compliance',
+          href: explorerPath('compliance-record', a.record._id),
         }),
       );
 
       const quickActions: DashboardQuickAction[] = [
-        { label: 'Renew', href: '/compliance', icon: RefreshCw },
-        { label: 'Upload Document', href: '/compliance', icon: FileUp },
-        { label: 'Assign Compliance Task', href: '/compliance', icon: UserCheck },
-        { label: 'View All Records', href: '/compliance', icon: ShieldCheck },
+        { label: 'Renew', href: '/business/compliance', icon: RefreshCw },
+        { label: 'Upload Document', href: '/business/compliance', icon: FileUp },
+        { label: 'Assign Compliance Task', href: '/business/compliance', icon: UserCheck },
+        { label: 'View All Records', href: '/business/compliance', icon: ShieldCheck },
       ];
 
       const recentActivity: DashboardActivity[] = records.slice(0, 10).map(
@@ -159,7 +163,7 @@ export function useComplianceDashboard() {
         table: { headers: ['Entity', 'Document', 'Number', 'Expiry', 'Status'], rows: tableRows },
       });
     } catch (e) {
-      console.error(e);
+      setError(getApiErrorMessage(e, 'Failed to load compliance dashboard'));
       setData(null);
     } finally {
       setLoading(false);
@@ -168,5 +172,5 @@ export function useComplianceDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  return { data, loading, refresh: load };
+  return { data, loading, error, refresh: load };
 }

@@ -6,6 +6,8 @@ import { LivePipeline } from '@/components/command/LivePipeline';
 import { SupplyChainSearch } from '@/components/supply-chain/SupplyChainSearch';
 import { RoleTodayWorkPanel } from '@/components/command/RoleTodayWorkPanel';
 import { useContextStore } from '@/store/context';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { moduleApi } from '@/api/client';
 import { formatCurrency } from '@/lib/utils';
 
@@ -37,24 +39,31 @@ export function SupplyChainWorkspacePage() {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [pipeline, setPipeline] = useState<Array<{ key: string; label: string; status: 'done' | 'active' | 'waiting'; detail?: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const pid = activeProject?.id;
-      const [dash, projects] = await Promise.all([
-        moduleApi.supplyChain.dashboard(pid),
-        pid ? Promise.resolve(null) : moduleApi.projects.list(),
-      ]);
-      setDashboard(dash.data);
-      const projectId = pid || projects?.data[0]?._id;
-      if (projectId) {
-        const pipe = await moduleApi.supplyChain.pipeline(projectId);
-        setPipeline(pipe.data);
+      setError(null);
+      try {
+        const pid = activeProject?.id;
+        const [dash, projects] = await Promise.all([
+          moduleApi.supplyChain.dashboard(pid),
+          pid ? Promise.resolve(null) : moduleApi.projects.list(),
+        ]);
+        setDashboard(dash.data);
+        const projectId = pid || projects?.data[0]?._id;
+        if (projectId) {
+          const pipe = await moduleApi.supplyChain.pipeline(projectId);
+          setPipeline(pipe.data);
+        }
+      } catch (e) {
+        setError(getApiErrorMessage(e, 'Failed to load supply chain workspace'));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    load().catch(() => setLoading(false));
+    load();
   }, [activeProject?.id]);
 
   const k = dashboard?.kpis;
@@ -74,6 +83,8 @@ export function SupplyChainWorkspacePage() {
       ]}
     >
       <SupplyChainSearch />
+
+      {error && !dashboard && <ErrorState message={error} onRetry={() => window.location.reload()} />}
 
       <div className="mb-6">
         <RoleTodayWorkPanel />

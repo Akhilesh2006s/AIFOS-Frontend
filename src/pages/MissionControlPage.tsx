@@ -7,7 +7,7 @@ import { moduleApi } from '@/api/client';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PageSkeleton } from '@/components/ui/PageSkeleton';
 import { OrganizationSelector } from '@/components/mission-control/OrganizationSelector';
-import { PERSONA_LABELS, type MissionControlSection } from '@/components/mission-control/types';
+import { PERSONA_LABELS, type MissionControlOverview, type MissionControlSection } from '@/components/mission-control/types';
 import { useOrgStore } from '@/store/org';
 import {
   ActivityFeedSection,
@@ -46,10 +46,15 @@ import {
   TodaysWorkSection,
 } from '@/components/mission-control/sections';
 
+function hasFinancialHealth(health?: MissionControlOverview['financialHealth']): health is NonNullable<MissionControlOverview['financialHealth']> {
+  if (!health) return false;
+  return health.totalBudget != null || health.actualSpend != null || (health.utilizationPercent ?? 0) > 0;
+}
+
 export function MissionControlPage() {
   const { user } = useAuthStore();
   const { hydrate: hydrateOrg } = useOrgStore();
-  const { data, loading, error, refresh } = useMissionControl();
+  const { data, loading, error, refresh, degraded } = useMissionControl();
 
   useEffect(() => { hydrateOrg(); }, [hydrateOrg]);
 
@@ -82,7 +87,7 @@ export function MissionControlPage() {
       case 'executiveSummary':
         return <ExecutiveSummarySection key={key} summary={data.executiveSummary} platform={data.platform} />;
       case 'financialHealth':
-        return data.financialHealth ? <FinancialHealthSection key={key} health={data.financialHealth} /> : null;
+        return hasFinancialHealth(data.financialHealth) ? <FinancialHealthSection key={key} health={data.financialHealth} /> : null;
       case 'pipeline':
         return <PipelineSection key={key} stages={data.pipeline} />;
       case 'todaysWork':
@@ -145,8 +150,8 @@ export function MissionControlPage() {
         return (
           <NotificationsSection
             key={key}
-            items={data.notifications.items.map((n) => ({ ...n, _id: String(n._id) }))}
-            unreadCount={data.notifications.unreadCount}
+            items={(data.notifications?.items ?? []).map((n) => ({ ...n, _id: String(n._id) }))}
+            unreadCount={data.notifications?.unreadCount ?? 0}
             onMarkRead={handleMarkRead}
             onMarkAllRead={handleMarkAllRead}
             onRefresh={refresh}
@@ -229,7 +234,13 @@ export function MissionControlPage() {
 
       {loading && !data && <PageSkeleton />}
 
-      {error && <ErrorState message={error} onRetry={refresh} />}
+      {degraded && error && (
+        <p className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-200" role="status">
+          {error}
+        </p>
+      )}
+
+      {error && !data && <ErrorState message={error} onRetry={refresh} />}
 
       {data && (data.visibleSections?.length ? data.visibleSections : sectionOrder).map((s) => renderSection(s as MissionControlSection))}
     </div>

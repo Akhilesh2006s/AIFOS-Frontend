@@ -5,7 +5,7 @@ import { useSiteEngineerDashboard } from '@/hooks/role-dashboards/useSiteEnginee
 const meta = ROLE_DASHBOARD_META.site_engineer;
 
 export function SiteEngineerDashboard() {
-  const { data, loading } = useSiteEngineerDashboard();
+  const { data, loading, error, refresh } = useSiteEngineerDashboard();
 
   return (
     <RoleDashboardShell
@@ -18,6 +18,8 @@ export function SiteEngineerDashboard() {
       showRecentActivity={meta.showRecentActivity}
       largeActions={meta.largeActions}
       loading={loading}
+      error={error}
+      onRetry={refresh}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       alerts={data?.alerts ?? []}

@@ -5,7 +5,7 @@ import { useStoreKeeperDashboard } from '@/hooks/role-dashboards/useStoreKeeperD
 const meta = ROLE_DASHBOARD_META.store_keeper;
 
 export function StoreKeeperDashboard() {
-  const { data, loading } = useStoreKeeperDashboard();
+  const { data, loading, error, refresh } = useStoreKeeperDashboard();
 
   return (
     <RoleDashboardShell
@@ -18,6 +18,8 @@ export function StoreKeeperDashboard() {
       showRecentActivity={meta.showRecentActivity}
       largeActions={meta.largeActions}
       loading={loading}
+      error={error}
+      onRetry={refresh}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       alerts={data?.alerts ?? []}

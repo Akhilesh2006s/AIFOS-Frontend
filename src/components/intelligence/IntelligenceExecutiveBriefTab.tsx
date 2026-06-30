@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import {
   Briefcase, Calendar, CalendarDays, FileText, LayoutDashboard, Loader2, Play, RefreshCw, Users,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { intelligenceApi } from '@/api/client';
-import { cn, formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 const BRIEF_SUBS = ['dashboard', 'daily', 'weekly', 'monthly', 'summaries'] as const;
 export type BriefSub = (typeof BRIEF_SUBS)[number];
@@ -54,26 +55,17 @@ export function IntelligenceExecutiveBriefTab({ projectId, sub, onSubChange }: P
   const health = dash?.operationalHealth as { score?: number; label?: string } | undefined;
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'daily' as const, label: 'Daily', icon: Calendar },
-        { id: 'weekly' as const, label: 'Weekly', icon: CalendarDays },
-        { id: 'monthly' as const, label: 'Monthly', icon: FileText },
-        { id: 'summaries' as const, label: 'Summaries', icon: Briefcase },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-sky-500/20 text-sky-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={12} /> {s.label}
-        </button>
-      ))}
-    </div>
+    <FilterChipBar
+      items={[
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'daily', label: 'Daily', icon: Calendar },
+        { id: 'weekly', label: 'Weekly', icon: CalendarDays },
+        { id: 'monthly', label: 'Monthly', icon: FileText },
+        { id: 'summaries', label: 'Summaries', icon: Briefcase },
+      ]}
+      active={sub}
+      onChange={(id) => onSubChange(id as BriefSub)}
+    />
   );
 
   if (loading && !dash) {

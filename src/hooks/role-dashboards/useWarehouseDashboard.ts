@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { moduleApi } from '@/api/client';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { isToday } from '@/lib/dateHelpers';
 import { formatCurrency } from '@/lib/utils';
 import type {
@@ -31,9 +32,11 @@ interface WarehouseDashboardData {
 export function useWarehouseDashboard() {
   const [data, setData] = useState<WarehouseDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [dash, invStats, grnsRes, issuesRes, materialsRes, movementsRes] = await Promise.all([
         moduleApi.supplyChain.dashboard(),
@@ -168,7 +171,7 @@ export function useWarehouseDashboard() {
 
       setData({ kpis, todaysWork, alerts, quickActions, recentActivity, chartOptions, table: { headers: ['Code', 'Material', 'Reorder Level', 'Unit'], rows: tableRows } });
     } catch (e) {
-      console.error(e);
+      setError(getApiErrorMessage(e, 'Failed to load dashboard'));
       setData({
         kpis: [],
         todaysWork: [],
@@ -185,5 +188,5 @@ export function useWarehouseDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  return { data, loading, refresh: load };
+  return { data, loading, error, refresh: load };
 }

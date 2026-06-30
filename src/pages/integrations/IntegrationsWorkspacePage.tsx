@@ -8,7 +8,7 @@ import { IntegrationsWebhooksTab } from '@/components/integrations/IntegrationsW
 import { IntegrationsErpTab, type ErpSub } from '@/components/integrations/IntegrationsErpTab';
 import { IntegrationsFieldTab, type FieldSub } from '@/components/integrations/IntegrationsFieldTab';
 import { IntegrationsCommTab, type CommSub } from '@/components/integrations/IntegrationsCommTab';
-import { cn } from '@/lib/utils';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
 
 const TABS = ['connectors', 'comm', 'field', 'erp', 'gateway', 'events', 'webhooks'] as const;
 type TabId = (typeof TABS)[number];
@@ -47,13 +47,11 @@ export function IntegrationsWorkspacePage() {
   const setCommSub = (sub: CommSub) => { const next = new URLSearchParams(searchParams); next.set('tab', 'comm'); next.set('sub', sub); setSearchParams(next); };
 
   const tabs = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-1">
-      {TABS.map((t) => (
-        <button key={t} onClick={() => setTab(t)} className={cn('rounded-lg px-3 py-1.5 text-xs font-medium transition', tab === t ? 'bg-teal-500/20 text-teal-300' : 'text-slate-500 hover:bg-white/5 hover:text-white')}>
-          {TAB_LABELS[t]}
-        </button>
-      ))}
-    </div>
+    <ModuleTabs
+      tabs={TABS.map((t) => ({ id: t, label: TAB_LABELS[t] }))}
+      active={tab}
+      onChange={(id) => setTab(id as TabId)}
+    />
   );
 
   const subtitles: Record<TabId, string> = {
@@ -68,7 +66,12 @@ export function IntegrationsWorkspacePage() {
 
   return (
     <ModulePageLayout title="Integration Platform" subtitle={subtitles[tab]} loading={false} tabs={tabs}
-      heroActions={<button onClick={() => window.location.reload()} className="flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:text-white"><RefreshCw size={14} /> Refresh</button>}>
+      heroActions={
+        <button type="button" onClick={() => window.location.reload()} className="btn-ghost btn-sm flex items-center gap-1">
+          <RefreshCw size={14} /> Refresh
+        </button>
+      }
+    >
       {tab === 'connectors' && <IntegrationsConnectorTab sub={connSub} onSubChange={setConnSub} />}
       {tab === 'comm' && <IntegrationsCommTab sub={commSub} onSubChange={setCommSub} />}
       {tab === 'field' && <IntegrationsFieldTab sub={fieldSub} onSubChange={setFieldSub} />}

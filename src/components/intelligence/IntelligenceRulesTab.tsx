@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { TextField, SelectField } from '@/components/ui/FormField';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { intelligenceApi } from '@/api/client';
 import { cn, formatDate } from '@/lib/utils';
 
@@ -142,26 +143,17 @@ export function IntelligenceRulesTab({ projectId, sub, onSubChange }: Props) {
   };
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'list' as const, label: 'Rule List', icon: List },
-        { id: 'builder' as const, label: 'Rule Builder', icon: Wrench },
-        { id: 'history' as const, label: 'Execution History', icon: History },
-        { id: 'test' as const, label: 'Test Rule', icon: TestTube },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-violet-500/20 text-violet-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={12} /> {s.label}
-        </button>
-      ))}
-    </div>
+    <FilterChipBar
+      items={[
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'list', label: 'Rule List', icon: List },
+        { id: 'builder', label: 'Rule Builder', icon: Wrench },
+        { id: 'history', label: 'Execution History', icon: History },
+        { id: 'test', label: 'Test Rule', icon: TestTube },
+      ]}
+      active={sub}
+      onChange={(id) => onSubChange(id as RuleSub)}
+    />
   );
 
   if (loading && !rules.length) {

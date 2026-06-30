@@ -5,7 +5,7 @@ import { useComplianceDashboard } from '@/hooks/role-dashboards/useComplianceDas
 const meta = ROLE_DASHBOARD_META.compliance_manager;
 
 export function ComplianceManagerDashboard() {
-  const { data, loading } = useComplianceDashboard();
+  const { data, loading, error, refresh } = useComplianceDashboard();
 
   return (
     <RoleDashboardShell
@@ -17,6 +17,8 @@ export function ComplianceManagerDashboard() {
       workSectionTitle={meta.workSectionTitle}
       showRecentActivity={meta.showRecentActivity}
       loading={loading}
+      error={error}
+      onRetry={refresh}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       alerts={data?.alerts ?? []}

@@ -152,7 +152,7 @@ export function DataTable({
             <tr key={i} className="data-table-row">
               {columns.map((c) => (
                 <td key={c.key}>
-                  {c.key === 'name' && row.link ? (
+                  {row.link && (c.key === 'name' || c.key === 'invoice' || c.key === 'documentType' || c.key === 'project') ? (
                     <Link to={String(row.link)} className="font-medium text-white transition-colors hover:text-accent">{row[c.key]}</Link>
                   ) : (
                     row[c.key]

@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { RowAvatar, ProgressBar, TagList } from '@/components/ui/TableCells';
 import { Modal } from '@/components/ui/Modal';
 import { TextField, SelectField, FormActions } from '@/components/ui/FormField';
-import { moduleApi } from '@/api/client';
+import { moduleApi, workflowApi } from '@/api/client';
 import type { Material, StockMovement } from '@/types/entities';
 
 const TABS = [
@@ -125,7 +125,7 @@ export function InventoryPage() {
   const issueMaterials = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await moduleApi.inventory.issueToSite({
+    await workflowApi.issueToSite({
       warehouseId: issueForm.warehouseId || warehouses[0]?._id,
       projectId: issueForm.projectId,
       siteId: issueForm.siteId,

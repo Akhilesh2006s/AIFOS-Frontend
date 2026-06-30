@@ -3,8 +3,8 @@ import {
   AlertCircle, ArrowLeftRight, Clock, History, LayoutDashboard, Loader2, Play, Plus, RefreshCw,
   Settings, Trash2, Wrench,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { integrationsApi } from '@/api/client';
-import { cn } from '@/lib/utils';
 
 const ERP_SUBS = ['dashboard', 'connectors', 'mappings', 'jobs', 'history', 'errors'] as const;
 export type ErpSub = (typeof ERP_SUBS)[number];
@@ -113,27 +113,21 @@ export function IntegrationsErpTab({ sub, onSubChange }: Props) {
   };
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'connectors' as const, label: 'Connectors', icon: Settings },
-        { id: 'mappings' as const, label: 'Field Mapping', icon: ArrowLeftRight },
-        { id: 'jobs' as const, label: 'Sync Jobs', icon: Clock },
-        { id: 'history' as const, label: 'Sync History', icon: History },
-        { id: 'errors' as const, label: 'Sync Errors', icon: AlertCircle },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-teal-500/20 text-teal-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={14} /> {s.label}
-        </button>
-      ))}
-      <button onClick={load} className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-slate-500 hover:text-white">
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <FilterChipBar
+        className="mb-0 min-w-0 flex-1"
+        items={[
+          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'connectors', label: 'Connectors', icon: Settings },
+          { id: 'mappings', label: 'Field Mapping', icon: ArrowLeftRight },
+          { id: 'jobs', label: 'Sync Jobs', icon: Clock },
+          { id: 'history', label: 'Sync History', icon: History },
+          { id: 'errors', label: 'Sync Errors', icon: AlertCircle },
+        ]}
+        active={sub}
+        onChange={(id) => onSubChange(id as ErpSub)}
+      />
+      <button type="button" onClick={load} className="btn-ghost btn-sm ml-auto flex shrink-0 items-center gap-1">
         <RefreshCw size={12} /> Refresh
       </button>
     </div>

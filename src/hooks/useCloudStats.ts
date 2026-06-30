@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { moduleApi } from '@/api/client';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 
 export interface CloudStats {
   projects?: { totalProjects?: number; active?: number; avgProgress?: number; totalBudget?: number };
@@ -15,9 +16,12 @@ export interface CloudStats {
 export function useCloudStats() {
   const [stats, setStats] = useState<CloudStats>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const results = await Promise.allSettled([
       moduleApi.projects.stats(),
       moduleApi.procurement.stats(),
       moduleApi.inventory.stats(),
@@ -26,24 +30,37 @@ export function useCloudStats() {
       moduleApi.maintenance.stats(),
       moduleApi.consumption.stats(),
       moduleApi.vendors.stats(),
-    ])
-      .then(([p, pr, inv, eq, fl, mt, cons, vnd]) => {
-        setStats({
-          projects: p.data,
-          procurement: pr.data,
-          inventory: inv.data,
-          equipment: eq.data,
-          fleet: fl.data,
-          maintenance: mt.data,
-          consumption: cons.data,
-          vendors: vnd.data,
-        });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    ]);
+
+    const [p, pr, inv, eq, fl, mt, cons, vnd] = results;
+    const failed = results.filter((r) => r.status === 'rejected').length;
+
+    setStats({
+      projects: p.status === 'fulfilled' ? p.value.data : undefined,
+      procurement: pr.status === 'fulfilled' ? pr.value.data : undefined,
+      inventory: inv.status === 'fulfilled' ? inv.value.data : undefined,
+      equipment: eq.status === 'fulfilled' ? eq.value.data : undefined,
+      fleet: fl.status === 'fulfilled' ? fl.value.data : undefined,
+      maintenance: mt.status === 'fulfilled' ? mt.value.data : undefined,
+      consumption: cons.status === 'fulfilled' ? cons.value.data : undefined,
+      vendors: vnd.status === 'fulfilled' ? vnd.value.data : undefined,
+    });
+
+    if (failed === results.length) {
+      const firstErr = results.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined;
+      setError(getApiErrorMessage(firstErr?.reason, 'Workspace stats unavailable'));
+    } else if (failed > 0) {
+      setError(`${failed} stat source(s) unavailable — showing partial data`);
+    }
+
+    setLoading(false);
   }, []);
 
-  return { stats, loading };
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { stats, loading, error, refresh: load };
 }
 
 export function getWorkspaceStatLines(id: string, stats: CloudStats): string[] {

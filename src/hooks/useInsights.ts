@@ -40,7 +40,7 @@ export function downloadExport(section: string, format: string, params?: Insight
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `insights-${section}.${format === 'pdf' ? 'pdf' : 'csv'}`;
+      a.download = `insights-${section}.${format === 'excel' ? 'csv' : format === 'pdf' ? 'pdf' : 'csv'}`;
       a.click();
       URL.revokeObjectURL(a.href);
     });

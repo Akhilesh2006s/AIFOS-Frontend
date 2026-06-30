@@ -5,6 +5,7 @@ import {
   RefreshCw, RotateCcw, Send, XCircle, Zap,
 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
 import { moduleApi } from '@/api/client';
 import { cn, formatDate } from '@/lib/utils';
 import { explorerPath } from '@/lib/explorerLinks';
@@ -165,20 +166,13 @@ function CompliancePlusList() {
         </div>
       )}
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={cn(
-              'rounded-lg px-3 py-1.5 text-xs capitalize',
-              tab === t ? 'bg-accent/20 text-accent' : 'bg-white/5 text-slate-400 hover:text-white',
-            )}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <ModuleTabs
+          className="min-w-0 flex-1"
+          tabs={TABS.map((t) => ({ id: t, label: t }))}
+          active={tab}
+          onChange={(id) => setTab(id as (typeof TABS)[number])}
+        />
         {tab === 'browse' && (
           <select
             value={category}
@@ -189,12 +183,12 @@ function CompliancePlusList() {
               else next.delete('category');
               setSearchParams(next);
             }}
-            className="ml-auto rounded-lg border border-white/10 bg-black/20 px-2 py-1.5 text-xs text-slate-300"
+            className="select-field shrink-0 text-xs"
           >
             {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         )}
-        <button type="button" onClick={() => load()} className="btn-ghost p-1.5">
+        <button type="button" onClick={() => load()} className="btn-ghost btn-sm shrink-0" aria-label="Refresh">
           <RefreshCw size={14} />
         </button>
       </div>

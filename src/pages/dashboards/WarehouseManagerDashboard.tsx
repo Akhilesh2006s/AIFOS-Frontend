@@ -6,7 +6,7 @@ import { useWarehouseDashboard } from '@/hooks/role-dashboards/useWarehouseDashb
 const meta = ROLE_DASHBOARD_META.warehouse_manager;
 
 export function WarehouseManagerDashboard() {
-  const { data, loading } = useWarehouseDashboard();
+  const { data, loading, error, refresh } = useWarehouseDashboard();
 
   return (
     <RoleDashboardShell
@@ -18,6 +18,8 @@ export function WarehouseManagerDashboard() {
       workSectionTitle={meta.workSectionTitle}
       showRecentActivity={meta.showRecentActivity}
       loading={loading}
+      error={error}
+      onRetry={refresh}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       alerts={data?.alerts ?? []}

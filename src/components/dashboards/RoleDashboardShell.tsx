@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, ChevronRight, Clock, Zap } from 'lucide-react';
 import { PageLoader } from '@/components/layout/PageShell';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { RichKpiCard } from '@/components/command/RichKpiCard';
 import { useAuthStore } from '@/store/auth';
 import type { RoleDashboardTheme } from '@/config/roleDashboardRegistry';
@@ -50,6 +51,8 @@ interface RoleDashboardShellProps {
   companyName?: string;
   showRecentActivity?: boolean;
   largeActions?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export function RoleDashboardShell({
@@ -73,6 +76,8 @@ export function RoleDashboardShell({
   companyName,
   showRecentActivity = true,
   largeActions = false,
+  error,
+  onRetry,
 }: RoleDashboardShellProps) {
   const { user } = useAuthStore();
   const themeStyle = THEME_STYLES[theme];
@@ -91,6 +96,10 @@ export function RoleDashboardShell({
   const dayStr = now.toLocaleDateString('en-IN', { weekday: 'long' });
 
   if (loading) return <PageLoader message={`Loading ${title}...`} />;
+
+  if (error && !kpis.length && !workItems.length) {
+    return <ErrorState title={`${title} unavailable`} message={error} onRetry={onRetry} />;
+  }
 
   const shellClass =
     theme === 'safety'

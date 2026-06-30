@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Grid3X3, History, LayoutDashboard, List, Loader2, Play, RefreshCw, Shield,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { intelligenceApi } from '@/api/client';
 import { BarChart } from '@/components/insights/chartHelpers';
 import { cn } from '@/lib/utils';
@@ -80,26 +81,17 @@ export function IntelligenceRisksTab({ projectId, sub, onSubChange }: Props) {
   const projectRisks = (dash?.projectRisks || []) as Array<{ projectId: string; name: string; score: number; severity: string; link: string }>;
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'list' as const, label: 'All Risks', icon: List },
-        { id: 'heatmap' as const, label: 'Heat Map', icon: Grid3X3 },
-        { id: 'domains' as const, label: 'By Domain', icon: Shield },
-        { id: 'history' as const, label: 'History', icon: History },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-red-500/20 text-red-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={12} /> {s.label}
-        </button>
-      ))}
-    </div>
+    <FilterChipBar
+      items={[
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'list', label: 'All Risks', icon: List },
+        { id: 'heatmap', label: 'Heat Map', icon: Grid3X3 },
+        { id: 'domains', label: 'By Domain', icon: Shield },
+        { id: 'history', label: 'History', icon: History },
+      ]}
+      active={sub}
+      onChange={(id) => onSubChange(id as RiskSub)}
+    />
   );
 
   if (loading && !topRisks.length) {

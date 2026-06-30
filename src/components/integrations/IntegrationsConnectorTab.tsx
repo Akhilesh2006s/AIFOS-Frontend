@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Activity, AlertCircle, CheckCircle2, LayoutDashboard, Loader2, Package, Plug, RefreshCw, Settings, Store,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { integrationsApi } from '@/api/client';
 import { cn } from '@/lib/utils';
 
@@ -82,30 +83,21 @@ export function IntegrationsConnectorTab({ sub, onSubChange }: Props) {
   };
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'installed' as const, label: 'Installed', icon: Plug },
-        { id: 'marketplace' as const, label: 'Marketplace', icon: Store },
-        { id: 'logs' as const, label: 'Logs', icon: Activity },
-        { id: 'settings' as const, label: 'Settings', icon: Settings },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-teal-500/20 text-teal-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={12} /> {s.label}
-        </button>
-      ))}
-    </div>
+    <FilterChipBar
+      items={[
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'installed', label: 'Installed', icon: Plug },
+        { id: 'marketplace', label: 'Marketplace', icon: Store },
+        { id: 'logs', label: 'Logs', icon: Activity },
+        { id: 'settings', label: 'Settings', icon: Settings },
+      ]}
+      active={sub}
+      onChange={(id) => onSubChange(id as ConnSub)}
+    />
   );
 
   if (loading && !dash) {
-    return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-teal-400" size={28} /></div>;
+    return <div className="flex items-center justify-center py-20 text-slate-500"><Loader2 className="mr-2 animate-spin text-accent" size={18} /> Loading connectors…</div>;
   }
 
   const renderDashboard = () => (

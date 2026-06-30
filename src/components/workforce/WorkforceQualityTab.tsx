@@ -264,12 +264,37 @@ export function WorkforceQualityTab({ projectId }: { projectId?: string }) {
 
   if (detail && (sub === 'tests' || sub === 'capa')) {
     const title = sub === 'tests' ? String(detail.testNumber) : String(detail.capaNumber);
+    const capaStatus = String(detail.status || 'open');
     return (
       <div className="space-y-4">
         <button type="button" onClick={() => setSub(sub)} className="text-xs text-sky-400 hover:underline">← Back</button>
-        <div className="command-card p-4">
-          <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-          <pre className="text-xs text-slate-400 whitespace-pre-wrap">{JSON.stringify(detail, null, 2)}</pre>
+        <div className="command-card p-4 space-y-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-white">{title}</h3>
+              <p className="text-sm text-slate-400">{String(detail.title || '')}</p>
+            </div>
+            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] uppercase text-slate-400">{capaStatus}</span>
+          </div>
+          {sub === 'capa' && (
+            <div className="flex flex-wrap gap-2">
+              {capaStatus === 'open' && (
+                <button type="button" className="text-xs bg-violet-600 text-white px-3 py-1.5 rounded"
+                  onClick={() => moduleApi.workforce.quality.updateCapa(String(detail.id), { status: 'in_progress' }).then(load)}>
+                  Start Work
+                </button>
+              )}
+              {['open', 'in_progress', 'verification'].includes(capaStatus) && (
+                <button type="button" className="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded"
+                  onClick={() => moduleApi.workforce.quality.updateCapa(String(detail.id), { verified: true, verificationNotes: 'Verified on site' }).then(load)}>
+                  Verify & Close
+                </button>
+              )}
+            </div>
+          )}
+          <p className="text-sm text-slate-300">{String(detail.description || '')}</p>
+          {detail.owner ? <p className="text-xs text-slate-500">Owner: {String(detail.owner)}</p> : null}
+          {detail.dueDate ? <p className="text-xs text-slate-500">Due: {formatDate(String(detail.dueDate))}</p> : null}
         </div>
       </div>
     );

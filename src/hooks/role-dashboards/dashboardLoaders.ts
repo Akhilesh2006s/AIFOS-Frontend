@@ -1,5 +1,7 @@
-import { missionControlApi, moduleApi } from '@/api/client';
+import { moduleApi } from '@/api/client';
 import { isToday } from '@/lib/dateHelpers';
+import { explorerPath } from '@/lib/explorerLinks';
+import { buildOverviewFallback, fetchOverviewSafe } from '@/lib/overviewFallback';
 import { formatCurrency } from '@/lib/utils';
 import type {
   DashboardActivity,
@@ -8,7 +10,7 @@ import type {
   DashboardQuickAction,
   DashboardWorkItem,
 } from '@/components/dashboards/types';
-import type { AlertItem, ProjectHealthRow, TodaysWorkItem } from '@/components/mission-control/types';
+import type { AlertItem, MissionControlOverview, ProjectHealthRow, TodaysWorkItem } from '@/components/mission-control/types';
 import {
   AlertTriangle,
   Banknote,
@@ -47,15 +49,34 @@ const empty: RoleDashboardPayload = {
   chartOptions: [],
 };
 
+const emptyExecutiveSummary = {
+  activeProjects: 0,
+  delayedProjects: 0,
+  activeEquipment: 0,
+  equipmentUnderMaintenance: 0,
+  pendingPurchaseRequisitions: 0,
+  pendingRfqs: 0,
+  pendingPurchaseOrders: 0,
+  lowStockMaterials: 0,
+  openIssues: 0,
+  openBreakdowns: 0,
+  totalBudget: 0,
+  totalSpent: 0,
+  budgetUtilization: 0,
+  links: {} as Record<string, string>,
+};
+
+function summaryFrom(mc: Partial<MissionControlOverview>) {
+  return { ...emptyExecutiveSummary, ...mc.executiveSummary };
+}
+
 export async function loadExecutiveDashboard(): Promise<RoleDashboardPayload> {
-  const [overviewRes, healthRes] = await Promise.all([
-    missionControlApi.overview(),
+  const [mcRaw, healthRes] = await Promise.all([
+    fetchOverviewSafe(),
     moduleApi.business.financialHealth().catch(() => ({ data: null })),
   ]);
-  const mc = overviewRes.data;
-  if (!mc) return empty;
-
-  const summary = mc.executiveSummary;
+  const mc = mcRaw ?? (await buildOverviewFallback());
+  const summary = summaryFrom(mc);
   const health = healthRes.data ?? {};
   const safety = mc.safety;
   const quality = mc.quality;
@@ -73,7 +94,7 @@ export async function loadExecutiveDashboard(): Promise<RoleDashboardPayload> {
     { label: 'Projects Delayed', value: summary.delayedProjects, color: '#EF4444' },
     { label: 'Budget Utilization', value: `${summary.budgetUtilization ?? 0}%`, color: '#F97316' },
     { label: 'Profit Margin', value: health.profitMargin != null ? `${health.profitMargin}%` : '—', color: '#EAB308' },
-    { label: 'Equipment Utilization', value: `${mc.assetHealth?.utilization ?? 0}%`, color: '#06B6D4' },
+    { label: 'Equipment Utilization', value: `${mc.assetHealth?.avgUtilization ?? mc.assetHealth?.utilization ?? 0}%`, color: '#06B6D4' },
     { label: 'Safety Score', value: safety?.safetyScore ?? '—', color: '#EF4444' },
     { label: 'Quality Score', value: quality?.qualityScore ?? '—', color: '#14B8A6' },
     { label: 'Compliance', value: mc.compliancePlus?.expiringSoon ?? 0, sublabel: 'expiring soon', color: '#6366F1' },
@@ -146,11 +167,9 @@ export async function loadExecutiveDashboard(): Promise<RoleDashboardPayload> {
 }
 
 export async function loadCooDashboard(): Promise<RoleDashboardPayload> {
-  const overviewRes = await missionControlApi.overview();
-  const mc = overviewRes.data;
-  if (!mc) return empty;
-
-  const summary = mc.executiveSummary;
+  const mcRaw = await fetchOverviewSafe();
+  const mc = mcRaw ?? (await buildOverviewFallback());
+  const summary = summaryFrom(mc);
 
   const kpis: DashboardKpi[] = [
     { label: "Today's Work", value: mc.todaysWork?.length ?? 0, color: '#8B5CF6' },
@@ -353,7 +372,7 @@ export async function loadEquipmentDashboard(): Promise<RoleDashboardPayload> {
   const todaysWork: DashboardWorkItem[] = idle.slice(0, 3).map((e: { _id: string; name?: string; assetTag?: string }) => ({
     id: e._id,
     label: `${e.name ?? e.assetTag ?? 'Equipment'} idle — assign`,
-    href: '/equipment',
+    href: explorerPath('equipment', e._id),
   }));
 
   const quickActions: DashboardQuickAction[] = [
@@ -549,19 +568,25 @@ export async function loadContractorSupervisorDashboard(): Promise<RoleDashboard
     { label: 'Equipment', value: dash.equipmentOnSite ?? 0, color: '#EAB308' },
   ];
 
+  const todaysWork: DashboardWorkItem[] = (dash.todaysWork ?? []).slice(0, 6).map((w: { id?: string; label: string; href?: string }, i: number) => ({
+    id: w.id ?? `contractor-${i}`,
+    label: w.label,
+    href: w.href ?? '/workforce?tab=attendance',
+  }));
+
   const quickActions: DashboardQuickAction[] = [
     { label: 'Check In Crew', href: '/workforce?tab=attendance', icon: CheckCircle },
     { label: 'Log Output', href: '/workforce?tab=productivity', icon: ClipboardCheck },
-    { label: 'Request Material', href: '/consumption', icon: Package },
+    { label: 'Request Material', href: '/workforce', icon: Package },
   ];
 
-  return { kpis, todaysWork: [], alerts: [], quickActions, recentActivity: [], chartOptions: [] };
+  return { kpis, todaysWork, alerts: [], quickActions, recentActivity: [], chartOptions: [] };
 }
 
 export async function loadOrgAdminDashboard(): Promise<RoleDashboardPayload> {
   const [usersRes, auditRes, settingsRes] = await Promise.all([
-    moduleApi.admin.users(),
-    moduleApi.admin.audit({ limit: 10 }),
+    moduleApi.admin.users().catch(() => ({ data: [] })),
+    moduleApi.admin.audit({ limit: 10 }).catch(() => ({ data: [] })),
     moduleApi.admin.settings().catch(() => ({ data: null })),
   ]);
 
@@ -595,13 +620,37 @@ export async function loadOrgAdminDashboard(): Promise<RoleDashboardPayload> {
 }
 
 export async function loadPlatformAdminDashboard(): Promise<RoleDashboardPayload> {
-  const data = await loadOrgAdminDashboard();
-  return {
-    ...data,
-    kpis: [
-      { label: 'Organizations', value: '—', color: '#94A3B8' },
-      ...data.kpis,
-      { label: 'API Health', value: 'OK', color: '#22C55E' },
-    ],
-  };
+  const [adminDashRes, auditRes] = await Promise.all([
+    moduleApi.admin.dashboard().catch(() => ({ data: null })),
+    moduleApi.admin.audit({ limit: 10 }).catch(() => ({ data: [] })),
+  ]);
+
+  const dash = adminDashRes.data;
+  const org = dash?.organization ?? {};
+  const users = dash?.users ?? {};
+  const audit = auditRes.data ?? [];
+
+  const kpis: DashboardKpi[] = [
+    { label: 'Organizations', value: org.total ?? 0, color: '#94A3B8' },
+    { label: 'Active Orgs', value: org.active ?? 0, color: '#22C55E' },
+    { label: 'Total Users', value: users.total ?? 0, color: '#3B82F6' },
+    { label: 'Online Now', value: users.online ?? 0, color: '#8B5CF6' },
+    { label: 'Pending Invites', value: users.pendingInvitations ?? 0, color: '#F97316' },
+    { label: 'Locked Users', value: users.locked ?? 0, color: '#EF4444' },
+  ];
+
+  const todaysWork: DashboardWorkItem[] = audit.slice(0, 5).map((e: { _id: string; action?: string; entityType?: string }, i: number) => ({
+    id: e._id ?? `audit-${i}`,
+    label: `${e.action ?? 'Event'} — ${e.entityType ?? 'system'}`,
+    href: '/admin?tab=audit',
+  }));
+
+  const quickActions: DashboardQuickAction[] = [
+    { label: 'Organizations', href: '/admin?tab=organizations', icon: Users },
+    { label: 'Manage Users', href: '/admin?tab=users', icon: Users },
+    { label: 'Roles & Permissions', href: '/admin?tab=roles', icon: Shield },
+    { label: 'Audit Log', href: '/admin?tab=audit', icon: ClipboardCheck },
+  ];
+
+  return { kpis, todaysWork, alerts: [], quickActions, recentActivity: [], chartOptions: [] };
 }

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Bell, LayoutDashboard, ListOrdered, Loader2, Mail, Megaphone, Play, Plus, RefreshCw, Send, Trash2, Workflow,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { integrationsApi } from '@/api/client';
-import { cn } from '@/lib/utils';
 
 const COMM_SUBS = ['dashboard', 'templates', 'queue', 'campaigns', 'rules', 'send'] as const;
 export type CommSub = (typeof COMM_SUBS)[number];
@@ -56,20 +56,23 @@ export function IntegrationsCommTab({ sub, onSubChange }: Props) {
   const kpis = (dash?.kpis || {}) as Record<string, number>;
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'templates' as const, label: 'Templates', icon: Mail },
-        { id: 'queue' as const, label: 'Queue', icon: ListOrdered },
-        { id: 'campaigns' as const, label: 'Campaigns', icon: Megaphone },
-        { id: 'rules' as const, label: 'Workflow Rules', icon: Workflow },
-        { id: 'send' as const, label: 'Send', icon: Send },
-      ]).map((s) => (
-        <button key={s.id} onClick={() => onSubChange(s.id)} className={cn('flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition', sub === s.id ? 'bg-teal-500/20 text-teal-300' : 'text-slate-500 hover:bg-white/5 hover:text-white')}>
-          <s.icon size={14} /> {s.label}
-        </button>
-      ))}
-      <button onClick={load} className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-slate-500 hover:text-white"><RefreshCw size={12} /> Refresh</button>
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <FilterChipBar
+        className="mb-0 min-w-0 flex-1"
+        items={[
+          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'templates', label: 'Templates', icon: Mail },
+          { id: 'queue', label: 'Queue', icon: ListOrdered },
+          { id: 'campaigns', label: 'Campaigns', icon: Megaphone },
+          { id: 'rules', label: 'Workflow Rules', icon: Workflow },
+          { id: 'send', label: 'Send', icon: Send },
+        ]}
+        active={sub}
+        onChange={(id) => onSubChange(id as CommSub)}
+      />
+      <button type="button" onClick={load} className="btn-ghost btn-sm ml-auto flex shrink-0 items-center gap-1">
+        <RefreshCw size={12} /> Refresh
+      </button>
     </div>
   );
 

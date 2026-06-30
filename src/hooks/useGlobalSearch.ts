@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { moduleApi, missionControlApi } from '@/api/client';
 
 import { COMMAND_PALETTE_ITEMS } from '@/config/workspaces';
+import { canAccessRoute } from '@/config/rbac';
+import { useAuthStore } from '@/store/auth';
 
 import { useContextStore } from '@/store/context';
 import { explorerPath, explorerPrByNumber, resolveExplorerKind } from '@/lib/explorerLinks';
@@ -38,11 +40,11 @@ export function useGlobalSearch(query: string) {
   const [apiLoading, setApiLoading] = useState(false);
 
   const activeProject = useContextStore((s) => s.activeProject);
+  const role = useAuthStore((s) => s.user?.role ?? 'user');
 
 
 
   useEffect(() => {
-
     if (loaded) return;
 
     Promise.all([
@@ -168,9 +170,8 @@ export function useGlobalSearch(query: string) {
 
 
         for (const g of COMMAND_PALETTE_ITEMS) {
-
           for (const item of g.items) {
-
+            if (!canAccessRoute(role, item.path.split('?')[0])) continue;
             results.push({
 
               id: `nav-${item.path}-${item.label}`,
@@ -200,8 +201,7 @@ export function useGlobalSearch(query: string) {
       })
 
       .catch(() => setLoaded(true));
-
-  }, [loaded]);
+  }, [loaded, role]);
 
 
 
@@ -496,15 +496,10 @@ export function useGlobalSearch(query: string) {
     const seen = new Set<string>();
 
     pool = pool.filter((r) => {
-
       const key = `${r.kind}-${r.path}-${r.label}`;
-
       if (seen.has(key)) return false;
-
       seen.add(key);
-
-      return true;
-
+      return canAccessRoute(role, r.path.split('?')[0]);
     });
 
     if (activeProject) {

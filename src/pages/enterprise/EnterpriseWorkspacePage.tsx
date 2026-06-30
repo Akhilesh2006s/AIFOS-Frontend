@@ -5,9 +5,9 @@ import {
 } from 'lucide-react';
 import { platformApi } from '@/api/client';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
 import { WhiteLabelTab } from '@/components/enterprise/WhiteLabelTab';
 import { useLocaleStore } from '@/store/locale';
-import { cn } from '@/lib/utils';
 
 const TABS = ['dashboard', 'hierarchy', 'regional', 'localization', 'settings', 'white-label'] as const;
 type TabId = (typeof TABS)[number];
@@ -129,18 +129,21 @@ export function EnterpriseWorkspacePage() {
   } | null;
 
   const tabs = (
-    <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-1">
-      {TABS.map((t) => (
-        <button key={t} onClick={() => setTab(t)} className={cn('rounded-lg px-3 py-1.5 text-xs font-medium transition', tab === t ? 'bg-violet-500/20 text-violet-300' : 'text-slate-500 hover:bg-white/5 hover:text-white')}>
-          {TAB_LABELS[t]}
-        </button>
-      ))}
+    <div className="flex flex-wrap items-end gap-3">
+      <ModuleTabs
+        className="min-w-0 flex-1"
+        tabs={TABS.map((t) => ({ id: t, label: TAB_LABELS[t] }))}
+        active={tab}
+        onChange={(id) => setTab(id as TabId)}
+      />
       {organizations.length > 0 && (
-        <select value={activeOrgId} onChange={(e) => onOrgChange(e.target.value)} className="ml-auto rounded-lg border border-white/10 bg-slate-900 px-2 py-1.5 text-xs text-slate-300">
+        <select value={activeOrgId} onChange={(e) => onOrgChange(e.target.value)} className="select-field shrink-0 text-xs">
           {organizations.map((o) => <option key={o.id} value={o.id}>{o.name}{o.code ? ` (${o.code})` : ''}</option>)}
         </select>
       )}
-      <button onClick={load} className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-slate-500 hover:text-white"><RefreshCw size={12} /> Refresh</button>
+      <button type="button" onClick={load} className="btn-ghost btn-sm flex shrink-0 items-center gap-1">
+        <RefreshCw size={12} /> Refresh
+      </button>
     </div>
   );
 

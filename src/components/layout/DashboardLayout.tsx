@@ -10,7 +10,8 @@ import { ToastHost } from '@/components/ui/ToastHost';
 import { ProjectContextBar } from './ProjectContextBar';
 import { useAuthStore, getStoredToken } from '@/store/auth';
 import { useUiStore } from '@/store/ui';
-import { analyticsApi } from '@/api/client';
+import { missionControlApi } from '@/api/client';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { getWorkspace } from '@/config/workspaces';
 import { useWorkspaceStore } from '@/store/workspace';
 
@@ -26,9 +27,21 @@ export function DashboardLayout() {
   useEffect(() => { hydrate(); }, [hydrate]);
 
   useEffect(() => {
-    analyticsApi.executive().then((res) => {
-      if (res.data?.systemAlerts?.length) setAlerts(res.data.systemAlerts);
-    }).catch(() => {});
+    missionControlApi
+      .overview()
+      .then((res) => {
+        const fromAlerts = (res.data?.alerts ?? []).slice(0, 5).map((a: { title: string; message: string; priority: string }, i: number) => ({
+          id: `mc-alert-${i}`,
+          message: `${a.title}: ${a.message}`,
+          severity: (a.priority === 'critical' ? 'critical' : a.priority === 'high' ? 'warning' : 'info') as SystemAlert['severity'],
+        }));
+        if (fromAlerts.length) setAlerts(fromAlerts);
+      })
+      .catch((err) => {
+        if (import.meta.env.DEV) {
+          console.warn('System alerts unavailable:', getApiErrorMessage(err));
+        }
+      });
   }, []);
 
   if (!token && !getStoredToken()) {

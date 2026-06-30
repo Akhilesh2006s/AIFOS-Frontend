@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Activity, Cpu, HeartPulse, LayoutDashboard, Loader2, MapPin, Play, Plus, Radio, RefreshCw, Trash2,
 } from 'lucide-react';
+import { FilterChipBar } from '@/components/layout/FilterChipBar';
 import { integrationsApi } from '@/api/client';
 import { cn } from '@/lib/utils';
 
@@ -87,26 +88,20 @@ export function IntegrationsFieldTab({ sub, onSubChange }: Props) {
   };
 
   const subNav = (
-    <div className="flex flex-wrap gap-1 border-b border-white/5 pb-2">
-      {([
-        { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'devices' as const, label: 'Devices', icon: Cpu },
-        { id: 'telemetry' as const, label: 'Telemetry', icon: Radio },
-        { id: 'health' as const, label: 'Health', icon: HeartPulse },
-        { id: 'ingest' as const, label: 'Publish', icon: Activity },
-      ]).map((s) => (
-        <button
-          key={s.id}
-          onClick={() => onSubChange(s.id)}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition',
-            sub === s.id ? 'bg-teal-500/20 text-teal-300' : 'text-slate-500 hover:bg-white/5 hover:text-white',
-          )}
-        >
-          <s.icon size={14} /> {s.label}
-        </button>
-      ))}
-      <button onClick={load} className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-slate-500 hover:text-white">
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <FilterChipBar
+        className="mb-0 min-w-0 flex-1"
+        items={[
+          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'devices', label: 'Devices', icon: Cpu },
+          { id: 'telemetry', label: 'Telemetry', icon: Radio },
+          { id: 'health', label: 'Health', icon: HeartPulse },
+          { id: 'ingest', label: 'Publish', icon: Activity },
+        ]}
+        active={sub}
+        onChange={(id) => onSubChange(id as FieldSub)}
+      />
+      <button type="button" onClick={load} className="btn-ghost btn-sm ml-auto flex shrink-0 items-center gap-1">
         <RefreshCw size={12} /> Refresh
       </button>
     </div>

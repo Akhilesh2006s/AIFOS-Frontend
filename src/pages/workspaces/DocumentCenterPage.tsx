@@ -5,6 +5,8 @@ import {
   RefreshCw, RotateCcw, Search, Send, XCircle,
 } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabs } from '@/components/layout/ModuleTabs';
+import { TableCard, TableEmpty } from '@/components/ui/TableCard';
 import { moduleApi } from '@/api/client';
 import { cn, formatDate } from '@/lib/utils';
 import { explorerPath, resolveEntityLink } from '@/lib/explorerLinks';
@@ -141,20 +143,16 @@ function DocumentCenterList() {
         </button>
       </form>
 
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={cn(
-              'rounded-lg px-3 py-1.5 text-xs capitalize',
-              tab === t ? 'bg-accent/20 text-accent' : 'bg-white/5 text-slate-400 hover:text-white',
-            )}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <ModuleTabs
+          className="min-w-0 flex-1"
+          tabs={TABS.map((t) => ({ id: t, label: t }))}
+          active={tab}
+          onChange={(id) => setTab(id as (typeof TABS)[number])}
+        />
+        <button type="button" onClick={() => load()} className="btn-ghost btn-sm shrink-0" aria-label="Refresh">
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       {dashboard?.byCategory && dashboard.byCategory.length > 0 && tab === 'browse' && !q && (
@@ -167,34 +165,32 @@ function DocumentCenterList() {
         </div>
       )}
 
-      <div className="command-card overflow-hidden">
-        <table className="w-full text-left text-sm">
+      <TableCard>
+        <table className="data-table">
           <thead>
-            <tr className="border-b border-white/5 text-[10px] uppercase tracking-wider text-slate-500">
-              <th className="px-4 py-3">Document</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Entity</th>
-              <th className="px-4 py-3">v</th>
-              <th className="px-4 py-3">Uploaded</th>
-              <th className="px-4 py-3" />
+            <tr>
+              <th scope="col">Document</th>
+              <th scope="col">Category</th>
+              <th scope="col">Status</th>
+              <th scope="col">Entity</th>
+              <th scope="col">v</th>
+              <th scope="col">Uploaded</th>
+              <th scope="col" />
             </tr>
           </thead>
           <tbody>
             {displayDocs.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">No documents found</td>
-              </tr>
+              <TableEmpty colSpan={7} message="No documents found" />
             ) : displayDocs.map((d) => (
-              <tr key={d.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                <td className="px-4 py-3">
-                  <Link to={explorerPath('document', d.id)} className="font-medium text-white hover:text-sky-300">
+              <tr key={d.id} className="data-table-row">
+                <td>
+                  <Link to={explorerPath('document', d.id)} className="font-medium text-white hover:text-accent">
                     {d.title}
                   </Link>
-                  <p className="text-[10px] text-slate-500">{d.fileName}</p>
+                  <p className="section-label mt-0.5 normal-case tracking-normal text-slate-500">{d.fileName}</p>
                 </td>
-                <td className="px-4 py-3 text-xs text-slate-400">{d.category.replace(/_/g, ' ')}</td>
-                <td className="px-4 py-3">
+                <td className="text-xs">{d.category.replace(/_/g, ' ')}</td>
+                <td>
                   <span className={cn('rounded px-1.5 py-0.5 text-[10px]', APPROVAL_STYLE[d.approvalStatus] || APPROVAL_STYLE.draft)}>
                     {d.approvalStatus}
                   </span>
@@ -202,21 +198,21 @@ function DocumentCenterList() {
                     <span className="ml-1 rounded bg-slate-600/30 px-1.5 py-0.5 text-[10px] text-slate-400">archived</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs">
+                <td className="text-xs">
                   {d.relatedEntityType ? (
-                    <Link to={d.relatedEntityLink || '#'} className="text-sky-400 hover:underline">
+                    <Link to={d.relatedEntityLink || '#'} className="text-accent hover:underline">
                       {d.relatedEntityType.replace(/_/g, ' ')}
                     </Link>
                   ) : (
-                    <Link to={`/projects/${d.projectId}?tab=documents`} className="text-slate-500 hover:text-sky-400">
+                    <Link to={`/projects/${d.projectId}?tab=documents`} className="text-slate-500 hover:text-accent">
                       project
                     </Link>
                   )}
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-slate-400">{d.version}</td>
-                <td className="px-4 py-3 text-xs text-slate-500">{formatDate(d.uploadedAt)}</td>
-                <td className="px-4 py-3">
-                  <a href={d.fileUrl} target="_blank" rel="noreferrer" className="text-sky-400 hover:underline">
+                <td className="font-mono text-xs tabular-nums">{d.version}</td>
+                <td className="text-xs">{formatDate(d.uploadedAt)}</td>
+                <td>
+                  <a href={d.fileUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline" aria-label="Open file">
                     <ExternalLink size={14} />
                   </a>
                 </td>
@@ -224,7 +220,7 @@ function DocumentCenterList() {
             ))}
           </tbody>
         </table>
-      </div>
+      </TableCard>
     </ModulePageLayout>
   );
 }

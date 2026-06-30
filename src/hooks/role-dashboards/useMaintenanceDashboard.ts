@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { moduleApi } from '@/api/client';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { isOverdue, isToday } from '@/lib/dateHelpers';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type {
@@ -25,9 +26,11 @@ interface MaintenanceDashboardData {
 export function useMaintenanceDashboard() {
   const [data, setData] = useState<MaintenanceDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [statsRes, ordersRes, breakdownsRes, calendarRes, equipStats] = await Promise.all([
         moduleApi.maintenance.stats(),
@@ -172,7 +175,7 @@ export function useMaintenanceDashboard() {
         table: { headers: ['WO #', 'Title', 'Type', 'Status', 'Scheduled'], rows: tableRows },
       });
     } catch (e) {
-      console.error(e);
+      setError(getApiErrorMessage(e, 'Failed to load maintenance dashboard'));
       setData(null);
     } finally {
       setLoading(false);
@@ -181,5 +184,5 @@ export function useMaintenanceDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  return { data, loading, refresh: load };
+  return { data, loading, error, refresh: load };
 }

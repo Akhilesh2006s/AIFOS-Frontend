@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { moduleApi } from '@/api/client';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { isToday } from '@/lib/dateHelpers';
 import type {
   DashboardActivity,
@@ -24,9 +25,11 @@ interface StoreKeeperDashboardData {
 export function useStoreKeeperDashboard() {
   const [data, setData] = useState<StoreKeeperDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [dash, issuesRes, entriesRes, consStats] = await Promise.all([
         moduleApi.supplyChain.dashboard(),
@@ -144,7 +147,7 @@ export function useStoreKeeperDashboard() {
         table: { headers: ['Issue #', 'Project', 'Status', 'Created'], rows: tableRows },
       });
     } catch (e) {
-      console.error(e);
+      setError(getApiErrorMessage(e, 'Failed to load store keeper dashboard'));
       setData(null);
     } finally {
       setLoading(false);
@@ -153,5 +156,5 @@ export function useStoreKeeperDashboard() {
 
   useEffect(() => { load(); }, [load]);
 
-  return { data, loading, refresh: load };
+  return { data, loading, error, refresh: load };
 }

@@ -17,7 +17,12 @@ export function LoginPage() {
 
   if (token || getStoredToken()) {
     const userStr = sessionStorage.getItem('afios_user') || localStorage.getItem('afios_user') || '{}';
-    const user = JSON.parse(userStr);
+    let user: { role?: string };
+    try {
+      user = JSON.parse(userStr);
+    } catch {
+      user = {};
+    }
     return <Navigate to={getDefaultLandingPath(user.role)} replace />;
   }
 
@@ -26,7 +31,12 @@ export function LoginPage() {
     setError('');
     try {
       await login(email, password);
-      const user = JSON.parse(sessionStorage.getItem('afios_user') || localStorage.getItem('afios_user') || '{}');
+      let user: { role?: string } = {};
+      try {
+        user = JSON.parse(sessionStorage.getItem('afios_user') || localStorage.getItem('afios_user') || '{}');
+      } catch {
+        user = {};
+      }
       setWorkspace(getRoleWorkspace(user.role));
       navigate(getDefaultLandingPath(user.role));
     } catch (err: unknown) {

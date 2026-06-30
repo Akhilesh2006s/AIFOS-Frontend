@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { IndianRupee, TrendingUp, AlertTriangle, Activity, ChevronRight, ChevronDown, Clock, Map } from 'lucide-react';
 import { ModulePageLayout } from '@/components/layout/ModulePageLayout';
+import { ModuleTabLinks } from '@/components/layout/ModuleTabLinks';
 import { CommandChartCard } from '@/components/command/CommandChartCard';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { getApiErrorMessage } from '@/lib/apiHelpers';
 import { moduleApi } from '@/api/client';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { explorerPath } from '@/lib/explorerLinks';
@@ -86,9 +89,11 @@ export function BusinessWorkspacePage() {
   const [recommendations, setRecommendations] = useState<RecRow[]>([]);
   const [forecast, setForecast] = useState<{ forecastFinalCost: number; costGrowthRate?: number } | null>(null);
   const [selectedProject, setSelectedProject] = useState<string | undefined>(projectId);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     const params = selectedProject ? { projectId: selectedProject } : undefined;
     Promise.all([
       moduleApi.business.dashboard(selectedProject),
@@ -106,7 +111,9 @@ export function BusinessWorkspacePage() {
         setRecommendations(recs.data);
         setForecast(fc.data);
       })
-      .catch(console.error)
+      .catch((e) => {
+        setError(getApiErrorMessage(e, 'Failed to load business workspace'));
+      })
       .finally(() => setLoading(false));
   }, [selectedProject]);
 
@@ -164,7 +171,7 @@ export function BusinessWorkspacePage() {
         <select
           value={selectedProject ?? ''}
           onChange={(e) => setSelectedProject(e.target.value || undefined)}
-          className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+          className="select-field text-sm"
         >
           <option value="">All Projects</option>
           {dashboard?.projectSummaries.map((p) => (
@@ -173,17 +180,16 @@ export function BusinessWorkspacePage() {
         </select>
       }
     >
-      <div className="mb-4 flex flex-wrap gap-2">
-        {TABS.map((t) => (
-          <Link
-            key={t}
-            to={tabLink(t)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize ${tab === t ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-500 hover:text-white'}`}
-          >
-            {t === 'budget' ? 'Budget vs Actual' : t === 'drivers' ? 'Cost Drivers' : t}
-          </Link>
-        ))}
-      </div>
+      <ModuleTabLinks
+        active={tab}
+        tabs={TABS.map((t) => ({
+          id: t,
+          label: t === 'budget' ? 'Budget vs Actual' : t === 'drivers' ? 'Cost Drivers' : t,
+          href: tabLink(t),
+        }))}
+      />
+
+      {error && !dashboard && <ErrorState message={error} />}
 
       {(tab === 'overview' || tab === 'budget') && dashboard && (
         <div className="grid gap-4 lg:grid-cols-2">

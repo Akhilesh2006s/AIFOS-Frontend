@@ -68,10 +68,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   hydrate: () => {
     const token = readToken();
     const userStr = sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY);
-    if (token && userStr) {
+    if (!token || !userStr) return;
+    try {
       const user = JSON.parse(userStr) as User;
       persistSession(token, user);
       set({ token, user });
+    } catch {
+      clearSession();
     }
   },
 }));
