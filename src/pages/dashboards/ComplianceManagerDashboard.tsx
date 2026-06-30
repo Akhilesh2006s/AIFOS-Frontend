@@ -1,28 +1,28 @@
-import { CommandChartCard } from '@/components/command/CommandChartCard';
 import { RoleDashboardShell } from '@/components/dashboards/RoleDashboardShell';
+import { ROLE_DASHBOARD_META } from '@/config/roleDashboardRegistry';
 import { useComplianceDashboard } from '@/hooks/role-dashboards/useComplianceDashboard';
+
+const meta = ROLE_DASHBOARD_META.compliance_manager;
 
 export function ComplianceManagerDashboard() {
   const { data, loading } = useComplianceDashboard();
 
   return (
     <RoleDashboardShell
-      title="Compliance Overview"
-      subtitle="RC, insurance, fitness, licenses, AMC, and regulatory alerts"
-      workspaceLabel="Assets"
-      workspaceColor="#1F4E79"
+      title={meta.title}
+      subtitle={meta.subtitle}
+      workspaceLabel={meta.workspaceLabel}
+      workspaceColor={meta.workspaceColor}
+      theme={meta.theme}
+      workSectionTitle={meta.workSectionTitle}
+      showRecentActivity={meta.showRecentActivity}
       loading={loading}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
       alerts={data?.alerts ?? []}
       quickActions={data?.quickActions ?? []}
       recentActivity={data?.recentActivity ?? []}
-      headerLink={{ label: 'Compliance Module', href: '/compliance' }}
-      charts={
-        data?.chartOptions.map((option, i) => (
-          <CommandChartCard key={i} title="" option={option} delay={i} />
-        ))
-      }
+      headerLink={meta.headerLink}
       table={
         data?.table
           ? { title: 'Compliance Records', headers: data.table.headers, rows: data.table.rows, emptyMessage: 'No compliance records' }

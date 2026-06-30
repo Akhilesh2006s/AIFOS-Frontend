@@ -37,6 +37,19 @@ const StoreKeeperDashboard = lazy(() => import('@/pages/dashboards/StoreKeeperDa
 const SiteEngineerDashboard = lazy(() => import('@/pages/dashboards/SiteEngineerDashboard').then((m) => ({ default: m.SiteEngineerDashboard })));
 const MaintenanceManagerDashboard = lazy(() => import('@/pages/dashboards/MaintenanceManagerDashboard').then((m) => ({ default: m.MaintenanceManagerDashboard })));
 const ComplianceManagerDashboard = lazy(() => import('@/pages/dashboards/ComplianceManagerDashboard').then((m) => ({ default: m.ComplianceManagerDashboard })));
+const ExecutiveDashboard = lazy(() => import('@/pages/dashboards/ExecutiveDashboard').then((m) => ({ default: m.ExecutiveDashboard })));
+const CooDashboard = lazy(() => import('@/pages/dashboards/CooDashboard').then((m) => ({ default: m.CooDashboard })));
+const ProjectManagerDashboard = lazy(() => import('@/pages/dashboards/ProjectManagerDashboard').then((m) => ({ default: m.ProjectManagerDashboard })));
+const ProcurementManagerDashboard = lazy(() => import('@/pages/dashboards/ProcurementManagerDashboard').then((m) => ({ default: m.ProcurementManagerDashboard })));
+const EquipmentManagerDashboard = lazy(() => import('@/pages/dashboards/EquipmentManagerDashboard').then((m) => ({ default: m.EquipmentManagerDashboard })));
+const FinanceManagerDashboard = lazy(() => import('@/pages/dashboards/FinanceManagerDashboard').then((m) => ({ default: m.FinanceManagerDashboard })));
+const SafetyOfficerDashboard = lazy(() => import('@/pages/dashboards/SafetyOfficerDashboard').then((m) => ({ default: m.SafetyOfficerDashboard })));
+const QualityEngineerDashboard = lazy(() => import('@/pages/dashboards/QualityEngineerDashboard').then((m) => ({ default: m.QualityEngineerDashboard })));
+const HrManagerDashboard = lazy(() => import('@/pages/dashboards/HrManagerDashboard').then((m) => ({ default: m.HrManagerDashboard })));
+const SupervisorDashboard = lazy(() => import('@/pages/dashboards/SupervisorDashboard').then((m) => ({ default: m.SupervisorDashboard })));
+const ContractorSupervisorDashboard = lazy(() => import('@/pages/dashboards/ContractorSupervisorDashboard').then((m) => ({ default: m.ContractorSupervisorDashboard })));
+const OrgAdminDashboard = lazy(() => import('@/pages/dashboards/OrgAdminDashboard').then((m) => ({ default: m.OrgAdminDashboard })));
+const PlatformAdminDashboard = lazy(() => import('@/pages/dashboards/PlatformAdminDashboard').then((m) => ({ default: m.PlatformAdminDashboard })));
 const EntityExplorerPage = lazy(() => import('@/pages/explorer/EntityExplorerPage').then((m) => ({ default: m.EntityExplorerPage })));
 
 function Lazy({ children }: { children: React.ReactNode }) {
@@ -52,6 +65,19 @@ export default function App() {
         <Route path="/mission-control" element={<Lazy><MissionControlPage /></Lazy>} />
         <Route path="/explore/purchase-request/by-number/:prNumber" element={<Lazy><EntityExplorerPage /></Lazy>} />
         <Route path="/explore/:entityType/:entityId" element={<Lazy><EntityExplorerPage /></Lazy>} />
+        <Route path="/dashboard/executive" element={<Lazy><ExecutiveDashboard /></Lazy>} />
+        <Route path="/dashboard/coo" element={<Lazy><CooDashboard /></Lazy>} />
+        <Route path="/dashboard/project-manager" element={<Lazy><ProjectManagerDashboard /></Lazy>} />
+        <Route path="/dashboard/procurement" element={<Lazy><ProcurementManagerDashboard /></Lazy>} />
+        <Route path="/dashboard/equipment" element={<Lazy><EquipmentManagerDashboard /></Lazy>} />
+        <Route path="/dashboard/finance" element={<Lazy><FinanceManagerDashboard /></Lazy>} />
+        <Route path="/dashboard/safety" element={<Lazy><SafetyOfficerDashboard /></Lazy>} />
+        <Route path="/dashboard/quality" element={<Lazy><QualityEngineerDashboard /></Lazy>} />
+        <Route path="/dashboard/hr" element={<Lazy><HrManagerDashboard /></Lazy>} />
+        <Route path="/dashboard/supervisor" element={<Lazy><SupervisorDashboard /></Lazy>} />
+        <Route path="/dashboard/contractor" element={<Lazy><ContractorSupervisorDashboard /></Lazy>} />
+        <Route path="/dashboard/org-admin" element={<Lazy><OrgAdminDashboard /></Lazy>} />
+        <Route path="/dashboard/platform-admin" element={<Lazy><PlatformAdminDashboard /></Lazy>} />
         <Route path="/dashboard/warehouse" element={<Lazy><WarehouseManagerDashboard /></Lazy>} />
         <Route path="/dashboard/store-keeper" element={<Lazy><StoreKeeperDashboard /></Lazy>} />
         <Route path="/dashboard/site-engineer" element={<Lazy><SiteEngineerDashboard /></Lazy>} />

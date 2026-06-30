@@ -329,6 +329,26 @@ export const COMMAND_PALETTE_ITEMS = [
 ];
 
 export function workspaceFromPath(pathname: string): WorkspaceId {
+  if (pathname.startsWith('/dashboard/')) {
+    if (pathname.includes('warehouse') || pathname.includes('store-keeper') || pathname.includes('procurement')) {
+      return 'supply_chain';
+    }
+    if (pathname.includes('equipment') || pathname.includes('maintenance')) return 'assets';
+    if (pathname.includes('finance') || pathname.includes('compliance')) return 'business';
+    if (
+      pathname.includes('safety') ||
+      pathname.includes('quality') ||
+      pathname.includes('/hr') ||
+      pathname.includes('supervisor') ||
+      pathname.includes('contractor')
+    ) {
+      return 'workforce';
+    }
+    if (pathname.includes('project-manager') || pathname.includes('site-engineer')) return 'projects';
+    if (pathname.includes('org-admin') || pathname.includes('platform-admin')) return 'admin';
+    if (pathname.includes('executive') || pathname.includes('coo')) return 'command';
+    return 'command';
+  }
   if (pathname === '/mission-control' || pathname.startsWith('/command')) return 'command';
   if (pathname.startsWith('/projects')) return 'projects';
   if (pathname.startsWith('/assets') || pathname.startsWith('/equipment') || pathname.startsWith('/fleet') || pathname.startsWith('/maintenance')) return 'assets';

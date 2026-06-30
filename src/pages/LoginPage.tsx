@@ -32,7 +32,7 @@ export function LoginPage() {
     } catch (err: unknown) {
       setError(
         axios.isAxiosError(err) && !err.response
-          ? 'Cannot reach API server. Make sure backend is running on port 3001.'
+          ? 'Cannot reach API server. Check VITE_API_URL and backend CORS settings.'
           : 'Invalid email or password',
       );
     }

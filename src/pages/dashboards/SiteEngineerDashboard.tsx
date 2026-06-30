@@ -1,16 +1,22 @@
-import { CommandChartCard } from '@/components/command/CommandChartCard';
 import { RoleDashboardShell } from '@/components/dashboards/RoleDashboardShell';
+import { ROLE_DASHBOARD_META } from '@/config/roleDashboardRegistry';
 import { useSiteEngineerDashboard } from '@/hooks/role-dashboards/useSiteEngineerDashboard';
+
+const meta = ROLE_DASHBOARD_META.site_engineer;
 
 export function SiteEngineerDashboard() {
   const { data, loading } = useSiteEngineerDashboard();
 
   return (
     <RoleDashboardShell
-      title="Site Operations"
-      subtitle={data?.projectName ? `Active site: ${data.projectName}` : 'Daily reports, issues, materials, and progress'}
-      workspaceLabel="Projects"
-      workspaceColor="#3B82F6"
+      title={meta.title}
+      subtitle={data?.projectName ? `Active site: ${data.projectName}` : meta.subtitle}
+      workspaceLabel={meta.workspaceLabel}
+      workspaceColor={meta.workspaceColor}
+      theme={meta.theme}
+      workSectionTitle={meta.workSectionTitle}
+      showRecentActivity={meta.showRecentActivity}
+      largeActions={meta.largeActions}
       loading={loading}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
@@ -20,12 +26,7 @@ export function SiteEngineerDashboard() {
       headerLink={
         data?.projectId
           ? { label: 'Project Detail', href: `/projects/${data.projectId}` }
-          : { label: 'Projects', href: '/projects' }
-      }
-      charts={
-        data?.chartOptions.map((option, i) => (
-          <CommandChartCard key={i} title="" option={option} delay={i} />
-        ))
+          : meta.headerLink
       }
       table={
         data?.table

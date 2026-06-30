@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
+import { getDefaultLandingPath } from '@/config/roleLanding';
 
 const ADMIN_PATHS = ['/admin', '/enterprise', '/developer', '/marketplace'];
 
@@ -51,7 +52,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user && !canAccess(user.role, location.pathname)) {
-    return <Navigate to="/mission-control" replace />;
+    return <Navigate to={getDefaultLandingPath(user.role)} replace />;
   }
 
   return <>{children}</>;

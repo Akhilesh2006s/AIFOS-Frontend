@@ -1,12 +1,17 @@
 import { CommandChartCard } from '@/components/command/CommandChartCard';
 import { RoleDashboardShell } from '@/components/dashboards/RoleDashboardShell';
 import { ROLE_DASHBOARD_META } from '@/config/roleDashboardRegistry';
-import { useWarehouseDashboard } from '@/hooks/role-dashboards/useWarehouseDashboard';
+import type { RoleDashboardPayload } from '@/hooks/role-dashboards/dashboardLoaders';
 
-const meta = ROLE_DASHBOARD_META.warehouse_manager;
+interface RoleDashboardViewProps {
+  roleKey: keyof typeof ROLE_DASHBOARD_META;
+  data: RoleDashboardPayload | null;
+  loading: boolean;
+}
 
-export function WarehouseManagerDashboard() {
-  const { data, loading } = useWarehouseDashboard();
+/** Renders a role dashboard from registry metadata + loaded data */
+export function RoleDashboardView({ roleKey, data, loading }: RoleDashboardViewProps) {
+  const meta = ROLE_DASHBOARD_META[roleKey];
 
   return (
     <RoleDashboardShell
@@ -17,13 +22,17 @@ export function WarehouseManagerDashboard() {
       theme={meta.theme}
       workSectionTitle={meta.workSectionTitle}
       showRecentActivity={meta.showRecentActivity}
+      largeActions={meta.largeActions}
+      headerLink={meta.headerLink}
       loading={loading}
       kpis={data?.kpis ?? []}
       todaysWork={data?.todaysWork ?? []}
+      decisions={data?.decisions}
       alerts={data?.alerts ?? []}
       quickActions={data?.quickActions ?? []}
       recentActivity={data?.recentActivity ?? []}
-      headerLink={meta.headerLink}
+      headerBadge={data?.headerBadge}
+      companyName={data?.companyName}
       charts={
         meta.showCharts && data?.chartOptions?.length
           ? data.chartOptions.map((option, i) => (
@@ -33,7 +42,12 @@ export function WarehouseManagerDashboard() {
       }
       table={
         data?.table
-          ? { title: 'Stock Registry', headers: data.table.headers, rows: data.table.rows, emptyMessage: 'No materials registered' }
+          ? {
+              title: 'Details',
+              headers: data.table.headers,
+              rows: data.table.rows,
+              emptyMessage: 'No records',
+            }
           : undefined
       }
     />

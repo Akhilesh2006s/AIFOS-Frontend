@@ -4,6 +4,7 @@ import { AlertTriangle, ChevronRight, Clock, Zap } from 'lucide-react';
 import { PageLoader } from '@/components/layout/PageShell';
 import { RichKpiCard } from '@/components/command/RichKpiCard';
 import { useAuthStore } from '@/store/auth';
+import type { RoleDashboardTheme } from '@/config/roleDashboardRegistry';
 import type {
   DashboardActivity,
   DashboardAlert,
@@ -12,6 +13,16 @@ import type {
   DashboardWorkItem,
 } from './types';
 import { formatDate } from '@/lib/utils';
+
+const THEME_STYLES: Record<RoleDashboardTheme, { accent: string; glow?: string }> = {
+  default: { accent: '#F97316' },
+  executive: { accent: '#F97316', glow: '0 0 48px rgba(249,115,22,0.12)' },
+  safety: { accent: '#EF4444', glow: '0 0 48px rgba(239,68,68,0.15)' },
+  quality: { accent: '#14B8A6', glow: '0 0 48px rgba(20,184,166,0.12)' },
+  finance: { accent: '#EAB308', glow: '0 0 48px rgba(234,179,8,0.1)' },
+  field: { accent: '#06B6D4' },
+  admin: { accent: '#94A3B8' },
+};
 
 interface RoleDashboardShellProps {
   title: string;
@@ -32,6 +43,13 @@ interface RoleDashboardShellProps {
     rows: (string | React.ReactNode)[][];
   };
   headerLink?: { label: string; href: string };
+  theme?: RoleDashboardTheme;
+  workSectionTitle?: string;
+  decisions?: DashboardWorkItem[];
+  headerBadge?: string;
+  companyName?: string;
+  showRecentActivity?: boolean;
+  largeActions?: boolean;
 }
 
 export function RoleDashboardShell({
@@ -48,8 +66,18 @@ export function RoleDashboardShell({
   charts,
   table,
   headerLink,
+  theme = 'default',
+  workSectionTitle = "Things Waiting For You",
+  decisions,
+  headerBadge,
+  companyName,
+  showRecentActivity = true,
+  largeActions = false,
 }: RoleDashboardShellProps) {
   const { user } = useAuthStore();
+  const themeStyle = THEME_STYLES[theme];
+  const workItems = decisions ?? todaysWork;
+  const workLabel = decisions ? (workSectionTitle || 'Decisions Today') : workSectionTitle;
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -58,10 +86,26 @@ export function RoleDashboardShell({
     return 'Good Evening';
   };
 
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+  const dayStr = now.toLocaleDateString('en-IN', { weekday: 'long' });
+
   if (loading) return <PageLoader message={`Loading ${title}...`} />;
 
+  const shellClass =
+    theme === 'safety'
+      ? 'border-t-2 border-red-500/40'
+      : theme === 'quality'
+        ? 'border-t-2 border-teal-500/40'
+        : theme === 'finance'
+          ? 'border-t-2 border-amber-500/30'
+          : '';
+
   return (
-    <div className="mx-auto max-w-7xl space-y-8 pb-14 page-enter">
+    <div
+      className={`mx-auto max-w-7xl space-y-8 pb-14 page-enter ${shellClass}`}
+      style={themeStyle.glow ? { boxShadow: `inset ${themeStyle.glow}` } : undefined}
+    >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
@@ -75,15 +119,51 @@ export function RoleDashboardShell({
           <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {greeting()}, {user?.name?.split(' ')[0] || 'there'}
           </h1>
+          {companyName && (
+            <p className="mt-1 text-sm font-medium text-slate-400">{companyName}</p>
+          )}
+          <p className="mt-1 text-xs text-slate-600">
+            {dayStr} | {timeStr}
+          </p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-500">{subtitle}</p>
           <p className="text-overline mt-2">{title}</p>
         </div>
-        {headerLink && (
-          <Link to={headerLink.href} className="btn-ghost text-xs">
-            {headerLink.label} →
-          </Link>
-        )}
+        <div className="flex flex-col items-end gap-2">
+          {headerBadge && (
+            <div
+              className="rounded-2xl px-4 py-2 text-center ring-1 ring-white/10"
+              style={{ background: `${workspaceColor}18`, borderColor: `${workspaceColor}44` }}
+            >
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">Company Health</p>
+              <p className="font-display text-2xl font-bold text-white">{headerBadge}</p>
+            </div>
+          )}
+          {headerLink && (
+            <Link to={headerLink.href} className="btn-ghost text-xs">
+              {headerLink.label} →
+            </Link>
+          )}
+        </div>
       </motion.div>
+
+      {/* Large field actions (site engineer, supervisor) */}
+      {largeActions && quickActions.length > 0 && (
+        <section>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {quickActions.map((action) => (
+              <Link
+                key={action.href + action.label}
+                to={action.href}
+                className="command-card flex min-h-[72px] items-center justify-center gap-3 p-5 text-center transition-all hover:border-white/20 hover:bg-white/5"
+                style={{ borderColor: `${themeStyle.accent}33` }}
+              >
+                {action.icon && <action.icon size={22} style={{ color: themeStyle.accent }} />}
+                <p className="text-base font-semibold text-white">{action.label}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* KPIs */}
       {kpis.length > 0 && (
@@ -97,12 +177,12 @@ export function RoleDashboardShell({
         </section>
       )}
 
-      {/* Today's Work */}
-      {todaysWork.length > 0 && (
+      {/* Today's Work / Decisions */}
+      {workItems.length > 0 && (
         <section>
-          <SectionLabel>Today&apos;s Work</SectionLabel>
+          <SectionLabel>{workLabel}</SectionLabel>
           <div className="command-card divide-y divide-white/5 p-0">
-            {todaysWork.map((item) => (
+            {workItems.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-3">
                 <div className="flex items-center gap-3">
                   <Clock size={16} className="shrink-0 text-slate-500" />
@@ -170,8 +250,8 @@ export function RoleDashboardShell({
         </section>
       )}
 
-      {/* Quick Actions */}
-      {quickActions.length > 0 && (
+      {/* Quick Actions (standard size — hidden when largeActions shown above) */}
+      {!largeActions && quickActions.length > 0 && (
         <section>
           <SectionLabel>Quick Actions</SectionLabel>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -199,8 +279,8 @@ export function RoleDashboardShell({
         </section>
       )}
 
-      {/* Recent Activity */}
-      {recentActivity.length > 0 && (
+      {/* Things Waiting / Recent Activity */}
+      {showRecentActivity && recentActivity.length > 0 && (
         <section>
           <SectionLabel>Recent Activity</SectionLabel>
           <div className="command-card p-5">

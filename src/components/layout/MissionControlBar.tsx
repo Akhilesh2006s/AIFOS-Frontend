@@ -1,16 +1,28 @@
 import { useNavigate } from 'react-router-dom';
 import { WORKSPACES, type WorkspaceId } from '@/config/workspaces';
+import { getVisibleWorkspaces } from '@/config/roleDashboardRegistry';
 import { useWorkspaceStore } from '@/store/workspace';
+import { useAuthStore } from '@/store/auth';
 import { AppIcon } from '@/components/icons/AppIcon';
 import { cn } from '@/lib/utils';
+
 export function MissionControlBar() {
   const navigate = useNavigate();
   const { activeWorkspace, setWorkspace } = useWorkspaceStore();
+  const { user } = useAuthStore();
+  const visibleIds = getVisibleWorkspaces(user?.role);
+  const isAdminRole = user?.role === 'admin' || user?.role === 'org_admin';
 
   const switchTo = (id: WorkspaceId, path: string) => {
     setWorkspace(id);
     navigate(path);
   };
+
+  const navWorkspaces = WORKSPACES.filter((w) => {
+    if (w.id === 'admin') return isAdminRole;
+    if (!visibleIds) return true;
+    return visibleIds.includes(w.id);
+  });
 
   return (
     <div className="border-b border-white/5 bg-command-sidebar/95 backdrop-blur-xl">
@@ -25,7 +37,7 @@ export function MissionControlBar() {
         <div className="h-5 w-px bg-white/10 hidden sm:block" />
 
         <div className="flex flex-1 items-center gap-1 overflow-x-auto scrollbar-thin pb-0.5">
-          {WORKSPACES.filter((w) => w.id !== 'admin').map((ws) => (
+          {navWorkspaces.map((ws) => (
             <button
               key={ws.id}
               onClick={() => switchTo(ws.id, ws.defaultPath)}
